@@ -82,6 +82,10 @@ def head(seo, prefix):
 <link rel="preload" href="{prefix}assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{prefix}assets/site.css">
 <script src="{prefix}assets/theme.js"></script>
+<script type="speculationrules">
+{{"prerender": [{{"where": {{"and": [{{"href_matches": "/*"}}, {{"not": {{"selector_matches": "[target], [download]"}}}}]}}, "eagerness": "moderate"}}],
+ "prefetch": [{{"where": {{"href_matches": "/*"}}, "eagerness": "conservative"}}]}}
+</script>
 </head>"""
 
 

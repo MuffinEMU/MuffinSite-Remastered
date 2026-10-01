@@ -339,6 +339,33 @@
     return !!(global.matchMedia && global.matchMedia("(prefers-color-scheme: light)").matches);
   }
 
+  // Folder this script lives in (assets/), for icon URLs before <body> exists.
+  var assetsBase = (document.currentScript && document.currentScript.src || "").replace(/[^/]*$/, "");
+  function iconUrl(t) { return assetsBase + "icons/" + t.id + ".png"; }
+
+  /* Point every img[data-theme-icon] parsed so far at the current theme's
+     icon. Called inline right after the hero icon, so the first paint already
+     shows the right icon (no swap animation on load). */
+  function paintIcons() {
+    var imgs = document.querySelectorAll("img[data-theme-icon]");
+    for (var i = 0; i < imgs.length; i++) {
+      if (imgs[i].getAttribute("data-painted") === "1") continue;
+      imgs[i].src = iconUrl(THEMES[current]);
+      imgs[i].setAttribute("data-painted", "1");
+    }
+  }
+
+  // Lets CSS hide below-the-fold reveals only when the script that shows them will run.
+  root.classList.remove("no-js");
+  root.classList.add("js");
+
+  // Colour transitions are for theme switches, not page loads: hold them off
+  // until the first frames have painted.
+  root.classList.add("booting");
+  var unboot = function () { root.classList.remove("booting"); };
+  if (global.requestAnimationFrame) global.requestAnimationFrame(function () { global.requestAnimationFrame(unboot); });
+  else unboot();
+
   // Apply immediately (this script is loaded in <head>) so there is no flash.
   // Mode first: the theme's light/dark values depend on it.
   var ready = false;
@@ -346,6 +373,12 @@
   var saved = load(STORE_KEY);
   setByIndex(saved && findIndexById(saved) >= 0 ? findIndexById(saved) : 0, false);
   ready = true;
+  // Fetch the saved theme's icon now, in parallel with the CSS and fonts.
+  if (assetsBase && document.head) {
+    var pre = document.createElement("link");
+    pre.rel = "preload"; pre.as = "image"; pre.href = iconUrl(THEMES[current]);
+    document.head.appendChild(pre);
+  }
   if (global.matchMedia) {
     var mq = global.matchMedia("(prefers-color-scheme: light)");
     var onSys = function () { if (getMode() === "auto") apply(current); };
@@ -360,6 +393,8 @@
     current: function () { return current; },
     spectrumOf: spectrumOf,
     backgroundOf: backgroundOf,
+    iconUrl: iconUrl,
+    paintIcons: paintIcons,
     buttonText: buttonText,
     setMode: setMode,
     getMode: getMode,

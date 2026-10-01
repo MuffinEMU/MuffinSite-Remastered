@@ -14,7 +14,6 @@
   var base = body.getAttribute("data-base") || "";
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-  root.classList.remove("no-js");
 
   function $(s, c) { return (c || doc).querySelector(s); }
   function $$(s, c) { return Array.prototype.slice.call((c || doc).querySelectorAll(s)); }
@@ -37,8 +36,10 @@
   /* ------------------------------------------- theme + mode switching */
   // A circular reveal from the point of interaction when View Transitions
   // exist; otherwise the registered colour properties cross-fade.
+  var vtRunning = false;
   function withReveal(evt, fn) {
-    if (reduced || !doc.startViewTransition) { fn(); return; }
+    // One reveal at a time: a switch during a running reveal just applies.
+    if (reduced || vtRunning || doc.hidden || !doc.startViewTransition) { fn(); return; }
     var x = window.innerWidth / 2, y = 80;
     if (evt && evt.clientX) { x = evt.clientX; y = evt.clientY; }
     else if (evt && evt.currentTarget && evt.currentTarget.getBoundingClientRect) {
@@ -49,8 +50,11 @@
     root.style.setProperty("--ry", y + "px");
     root.style.setProperty("--rr", rr + "px");
     root.classList.add("theme-reveal");
-    var vt = doc.startViewTransition(fn);
-    vt.finished.finally(function () { root.classList.remove("theme-reveal"); });
+    vtRunning = true;
+    var vt;
+    try { vt = doc.startViewTransition(fn); }
+    catch (e) { root.classList.remove("theme-reveal"); vtRunning = false; fn(); return; }
+    vt.finished.catch(function () {}).then(function () { root.classList.remove("theme-reveal"); vtRunning = false; });
   }
   function setTheme(id, evt) {
     withReveal(evt, function () { T.setById(id, true); });
@@ -137,67 +141,41 @@
   if (reduced || !("IntersectionObserver" in window)) {
     revealEls.forEach(function (el) { el.classList.add("in"); });
   } else {
+    // Anything already on screen when the page loads (including a reload
+    // that restores the scroll position) shows at once, without animating.
+    var vh = window.innerHeight;
+    revealEls.forEach(function (el) {
+      var r = el.getBoundingClientRect();
+      if (r.top < vh && r.bottom > 0) el.classList.add("instant", "in");
+    });
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
         if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); }
       });
     }, { rootMargin: "0px 0px -8% 0px", threshold: 0.12 });
-    revealEls.forEach(function (el) { io.observe(el); });
+    revealEls.forEach(function (el) { if (!el.classList.contains("in")) io.observe(el); });
   }
   // Stagger siblings that share a [data-stagger] parent.
   $$("[data-stagger]").forEach(function (p) {
     $$(":scope > [data-reveal]", p).forEach(function (el, i) { el.style.setProperty("--i", i); });
   });
 
-  /* ------------------------------------------------ split wordmark */
-  $$("[data-split]").forEach(function (el) {
-    if (reduced) return;
-    var i = 0;
-    function walk(node) {
-      Array.prototype.slice.call(node.childNodes).forEach(function (c) {
-        if (c.nodeType === 3) {
-          var frag = doc.createDocumentFragment();
-          c.textContent.split("").forEach(function (ch) {
-            var s = doc.createElement("span");
-            s.className = "ch"; s.textContent = ch; s.style.setProperty("--i", i++);
-            s.setAttribute("aria-hidden", "true");
-            frag.appendChild(s);
-          });
-          node.replaceChild(frag, c);
-        } else if (c.nodeType === 1) walk(c);
-      });
-    }
-    el.setAttribute("aria-label", el.textContent);
-    el.classList.add("split");
-    walk(el);
-    // Transformed letters can't share the parent's background-clip: text, so
-    // each letter gets the gradient sized and offset to its parent's box...
-    var chars = $$(".ch", el);
-    chars.forEach(function (c) {
-      var host = c.parentNode, hb = host.getBoundingClientRect(), cb = c.getBoundingClientRect();
-      c.style.setProperty("--bw", hb.width + "px");
-      c.style.setProperty("--bx", (hb.left - cb.left) + "px");
-    });
-    // ...and once the intro has played, the spans are unwrapped so the
-    // original gradient (and its sheen animation) takes over seamlessly.
-    var last = chars[chars.length - 1];
-    if (last) last.addEventListener("animationend", function () {
-      $$("*", el).concat([el]).forEach(function (n) { n.normalize && n.normalize(); });
-      chars.forEach(function (c) { c.replaceWith(doc.createTextNode(c.textContent)); });
-      el.normalize();
-      el.classList.remove("split");
-    });
-  });
-
   /* ------------------------------------------------- pointer effects */
   if (finePointer && !reduced) {
+    // One measurement per frame at most, however fast the pointer moves.
+    var lastMove = null, moveQueued = false;
     doc.addEventListener("pointermove", function (e) {
-      var card = e.target.closest && e.target.closest(".card");
-      if (card) {
+      lastMove = e;
+      if (moveQueued) return;
+      moveQueued = true;
+      requestAnimationFrame(function () {
+        moveQueued = false;
+        var ev = lastMove, card = ev.target.closest && ev.target.closest(".card");
+        if (!card) return;
         var r = card.getBoundingClientRect();
-        card.style.setProperty("--x", (e.clientX - r.left) + "px");
-        card.style.setProperty("--y", (e.clientY - r.top) + "px");
-      }
+        card.style.setProperty("--x", (ev.clientX - r.left) + "px");
+        card.style.setProperty("--y", (ev.clientY - r.top) + "px");
+      });
     }, { passive: true });
 
     $$(".btn").forEach(function (b) {
@@ -222,6 +200,16 @@
       });
     }
   }
+
+  /* --------------------------------------- pause offscreen animation */
+  var anims = $$("[data-anim]");
+  if (anims.length && "IntersectionObserver" in window) {
+    var aio = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { en.target.classList.toggle("paused", !en.isIntersecting); });
+    }, { rootMargin: "100px 0px" });
+    anims.forEach(function (el) { aio.observe(el); });
+  }
+  doc.addEventListener("visibilitychange", function () { root.classList.toggle("tab-hidden", doc.hidden); });
 
   /* ------------------------------------------------------ count-up */
   $$("[data-count]").forEach(function (el) {
@@ -304,7 +292,7 @@
     });
     $$("[data-theme-name]").forEach(function (el) { el.textContent = t.name; });
     var heroIcon = $(".hero-icon");
-    if (heroIcon) swapImg(heroIcon, "hero-img", iconSrc(t), 512);
+    if (heroIcon) swapImg(heroIcon, "hero-img", iconSrc(t), 192);
     if (lab) {
       // The preview is a small piece of the app in this theme: its background,
       // a card (cream, wrapper stroke, brown text) and a primary button
@@ -338,14 +326,19 @@
   // decoded, so it never flashes blank.
   function swapImg(box, cls, src, size) {
     var cur = $("img." + cls + ":not(.out)", box);
-    if (cur && cur.getAttribute("src") === src) return;
+    if (cur && cur.src === new URL(src, location.href).href) return;
+    // Stale outgoing images from rapid switching are dropped at once.
+    $$("img." + cls + ".out", box).forEach(function (o) { o.remove(); });
     var img = doc.createElement("img");
-    img.className = cls; img.alt = ""; img.width = size; img.height = size; img.src = src;
+    img.className = cls + " swap-in"; img.alt = ""; img.width = size; img.height = size; img.src = src;
     function show() {
       box.appendChild(img);
       if (!cur) return;
-      if (reduced) cur.remove();
-      else { cur.classList.add("out"); cur.addEventListener("animationend", function () { cur.remove(); }); }
+      if (reduced || doc.hidden) { cur.remove(); return; }
+      cur.classList.add("out");
+      cur.addEventListener("animationend", function () { cur.remove(); });
+      // animationend never fires if animations are paused or disabled.
+      setTimeout(function () { if (cur.parentNode) cur.remove(); }, 900);
     }
     if (img.decode) img.decode().then(show, show); else show();
   }
@@ -357,6 +350,7 @@
     });
   }
 
+  T.paintIcons();
   T.onChange(syncTheme);
   syncTheme(T.THEMES[T.current()]);
 

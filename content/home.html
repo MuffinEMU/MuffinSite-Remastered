@@ -1,21 +1,22 @@
 <section class="hero">
   <div class="wrap hero-grid">
     <div>
-      <span class="pill" data-reveal><span class="pulse" aria-hidden="true"></span>Wii U emulation · iPhone &amp; iPad · Open source</span>
-      <h1 class="wordmark" data-split>Muffin<span class="accent">EMU</span></h1>
-      <p class="lede" data-reveal style="--i:4">A Wii U emulator for iPhone and iPad, built on Cemu — with a Metal-native renderer, measured on-screen GamePad controls, and the recompiler enabled wherever iOS allows it.</p>
-      <div class="hero-ctas" data-reveal style="--i:5">
+      <span class="pill"><span class="pulse" aria-hidden="true"></span>Wii U emulation · iPhone &amp; iPad · Open source</span>
+      <h1 class="wordmark">Muffin<span class="accent">EMU</span></h1>
+      <p class="lede">A Wii U emulator for iPhone and iPad, built on Cemu — with a Metal-native renderer, measured on-screen GamePad controls, and the recompiler enabled wherever iOS allows it.</p>
+      <div class="hero-ctas">
         <a class="btn btn-primary" href="docs/installation.html"><svg aria-hidden="true"><use href="#i-download"/></svg>Get MuffinEMU</a>
         <a class="btn btn-outline" href="https://github.com/kiddreads/MuffinEMU"><svg aria-hidden="true"><use href="#i-github"/></svg>View source</a>
       </div>
-      <p class="hero-note" data-reveal style="--i:6">Tested on an iPad Pro (A12Z). Free and open source; bring your own games and keys. <a href="#status">Status →</a></p>
+      <p class="hero-note">Tested on an iPad Pro (A12Z). Free and open source; bring your own games and keys. <a href="#status">Status →</a></p>
     </div>
-    <div class="hero-visual" aria-hidden="true" data-reveal="scale" style="--i:2">
+    <div class="hero-visual" aria-hidden="true" data-anim>
       <div class="orb"></div>
       <div class="ring"></div>
       <div class="ring r2"></div>
       <div class="ring r3"></div>
-      <div class="hero-icon"><img class="hero-img" src="assets/icons/bakery.png" alt="" width="512" height="512"></div>
+      <div class="hero-icon"><img class="hero-img" data-theme-icon src="assets/icons/bakery.png" alt="" width="192" height="192" fetchpriority="high"></div>
+      <script>MuffinThemes.paintIcons()</script>
       <span class="chip c1"><i></i>Metal renderer</span>
       <span class="chip c2"><i></i>Measured GamePad</span>
       <span class="chip c3"><i></i>31 themes</span>
@@ -24,7 +25,7 @@
   <div class="scroll-cue" aria-hidden="true">Scroll<span></span></div>
 </section>
 
-<div class="marquee" aria-label="Highlights">
+<div class="marquee" aria-label="Highlights" data-anim>
   <div class="marquee-track">
     <span>Built on Cemu</span><span>Metal-native renderer</span><span>Vulkan via MoltenVK</span><span>4 save-state slots per game</span><span>20 controller skins</span><span>31 app icons &amp; themes</span><span>Graphic packs</span><span>DLC &amp; update import</span><span>iOS 15 or later</span><span>MPL-2.0</span>
     <span aria-hidden="true">Built on Cemu</span><span aria-hidden="true">Metal-native renderer</span><span aria-hidden="true">Vulkan via MoltenVK</span><span aria-hidden="true">4 save-state slots per game</span><span aria-hidden="true">20 controller skins</span><span aria-hidden="true">31 app icons &amp; themes</span><span aria-hidden="true">Graphic packs</span><span aria-hidden="true">DLC &amp; update import</span><span aria-hidden="true">iOS 15 or later</span><span aria-hidden="true">MPL-2.0</span>
@@ -157,9 +158,9 @@
     </div>
     <div class="lab-preview" data-lab data-reveal="scale" aria-hidden="true">
       <div class="lp-swatches"><i></i><i></i><i></i><i></i></div>
-      <div class="lp-stage"><img class="lp-icon" src="assets/icons/bakery.png" alt="" width="192" height="192"></div>
+      <div class="lp-stage"><img class="lp-icon" data-theme-icon src="assets/icons/bakery.png" alt="" width="192" height="192"></div>
       <div class="lp-glass">
-        <img class="lp-mini" src="assets/icons/bakery.png" alt="" width="56" height="56">
+        <img class="lp-mini" data-theme-icon src="assets/icons/bakery.png" alt="" width="56" height="56">
         <div class="lp-text"><div class="lp-name">Bakery (Original)</div><div class="lp-sub">1 / 31</div></div>
         <span class="lp-btn">Play</span>
       </div>
@@ -169,7 +170,7 @@
 
 <section class="section" id="install" style="padding-top:0">
   <div class="wrap">
-    <div class="install-panel" data-reveal="scale">
+    <div class="install-panel" data-reveal="scale" data-anim>
       <span class="eyebrow">Install</span>
       <h2>Install <span class="grad-text">MuffinEMU</span></h2>
       <p style="color:var(--text-2);font-size:1.1rem;max-width:44em">Pick the source that matches how you install apps. iPhone and iPad, iOS 15 or later.</p>
