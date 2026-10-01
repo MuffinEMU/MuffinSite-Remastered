@@ -17,11 +17,14 @@ variants are written per icon:
   <id>-tinted.svg  tinted appearance (iOS 18): the character in greyscale on
                    black, for the system to tint.
 
-On top of that, every variant gets the same lighting, built only from the
-icon's own colours: a backlight bloom behind the muffin, a corner vignette, a
-softer two-layer contact shadow, ambient occlusion and cylinder shading on
-the paper liner, a rim light along the dome, and a glass top highlight and
-edge rim.
+On top of that, the default and dark variants get restrained lighting built
+only from the icon's own colours: a soft key light, a backlight behind the
+muffin in a lighter tone of the background's own hue (never white, which reads
+as haze), a gentle corner vignette, a softer contact shadow, and shading on
+the underside of the dome and the paper liner in the material's own darker
+tone, clipped to the real shapes. Nothing is outlined or rimmed: iOS applies
+its own mask, and baked-in borders or highlight strokes read as stray lines.
+Tinted variants are the bare glyph: no glow, no shadows.
 
 Only the standard library and Pillow (for the one bitmap, the Autism
 Acceptance infinity, which is embedded as WebP) are needed. File names are
@@ -129,23 +132,32 @@ def refs(el):
 
 # ------------------------------------------------------------------ remaster
 def palette(bg_elems, defs, src_dir):
-    """Every colour the background uses (directly, via gradients, or in its
-    bitmap), as hex."""
+    """The colours of the background canvas itself: opaque fills, flag
+    stripes, gradient stops and the bitmap. Soft overlays (the source art's
+    faint glow circles, translucent shapes) are not canvas and are skipped,
+    or a white glow would be read as the background colour."""
+    gradients = {g.get("id"): g for g in defs}
+    def stops_of(gid):
+        g = gradients.get(gid)
+        if g is None: return []
+        return [(norm_colour(x.get("stop-color")), float(x.get("stop-opacity", 1))) for x in walk(g) if x.get("stop-color")]
     cols = []
-    ids = set()
     for el in bg_elems:
-        ids |= refs(el)
         for e in walk(el):
-            for a in COLOUR_ATTRS:
-                c = norm_colour(e.get(a))
-                if c: cols.append(c)
+            if float(e.get("opacity", 1)) < 0.6:
+                continue
             if e.tag == Q("image"):
                 cols += image_colours(src_dir / (e.get("href") or e.get("{%s}href" % XLINK)))
-    for g in defs:
-        if g.get("id") in ids:
-            for s in walk(g):
-                c = norm_colour(s.get("stop-color"))
-                if c: cols.append(c)
+                continue
+            for a in ("fill", "stroke"):
+                v = e.get(a) or ""
+                m = re.match(r"url\(#([^)]+)\)", v)
+                if m:
+                    st = stops_of(m.group(1))
+                    if st and min(o for _, o in st) >= 0.6:
+                        cols += [c for c, _ in st if c]
+                elif norm_colour(v):
+                    cols.append(norm_colour(v))
     return cols or ["#808080"]
 
 def image_colours(path):
@@ -170,7 +182,10 @@ def embed(path):
 
 def pick(cols):
     lch = [(c,) + to_oklch(c) for c in set(cols)]
-    light = max(lch, key=lambda x: x[1])
+    # The backlight comes from the lightest *coloured* tone when there is one
+    # (a flag's white stripe would read as haze).
+    chromatic = [x for x in lch if x[2] >= 0.04]
+    light = max(chromatic or lch, key=lambda x: x[1])
     dark = min(lch, key=lambda x: x[1])
     accent = max(lch, key=lambda x: x[2])
     return light, dark, accent
@@ -194,6 +209,12 @@ def build(src_path, variant):
     ground = kids[gs]
 
     cols = palette(bg, defs, src_path.parent)
+    # An SVG shown through <img> can't load other files, so any bitmap is
+    # embedded (as a small WebP; it is drawn at most ~260 CSS px wide).
+    for im in [e for e in walk(root) if e.tag == Q("image")]:
+        href = im.get("href") or im.get("{%s}href" % XLINK)
+        if href and not href.startswith("data:"):
+            im.set("href", embed(src_path.parent / href))
     light, dark, accent = pick(cols)
     # The liner's own shadow colour (its drop-shadow flood), else the darkest bg tone.
     flood = next((norm_colour(e.get("flood-color")) for e in walk(defs) if e.get("flood-color")), None) or dark[0]
@@ -213,7 +234,9 @@ def build(src_path, variant):
                 dome_dark = min(stops, key=lambda c: to_oklch(c)[0]); break
             if norm_colour(e.get("fill")):
                 dome_dark = norm_colour(e.get("fill")); break
-    pleats = [norm_colour(e.get("fill")) for e in walk(root) if e.tag == Q("polygon") and norm_colour(e.get("fill"))]
+    pleat_els = [e for e in walk(root) if e.tag == Q("polygon") and (e.get("points") or "").strip()]
+    pleats = [norm_colour(e.get("fill")) for e in pleat_els if norm_colour(e.get("fill"))]
+    pleat_polys = ['<polygon points="%s"/>' % e.get("points") for e in pleat_els]
     dome_shadow = material_shadow(dome_dark or flood, 0.66)
     liner_shadow = material_shadow(min(pleats, key=lambda c: to_oklch(c)[0]) if pleats else flood, 0.6)
 
@@ -236,12 +259,18 @@ def build(src_path, variant):
                         for a in ("fill", "stroke"):
                             if e.get(a) == "url(#%s)" % gid: e.set(a, "url(#%s-rm)" % gid)
         for el in bg: recolour_tree(el, fn)
+        if variant == "dark":
+            for el in bg:
+                for e in walk(el):
+                    if e.get("filter") and e.tag != Q("image"): del e.attrib["filter"]
+            # Autism Muffin cuts a white gap around the muffin so it reads
+            # against the rings on a white canvas; on a dark canvas that gap
+            # reads as a heavy outline, and the muffin already stands out.
+            for el in list(bg):
+                if el.tag == Q("path") and "L624,895" in norm_d(el.get("d")):
+                    root.remove(el); bg.remove(el)
         # The one bitmap (Autism Acceptance infinity) goes through an equivalent filter.
         imgs = [e for el in bg for e in walk(el) if e.tag == Q("image")]
-        # An SVG shown through <img> can't load other files, so the bitmap is
-        # embedded (as a small WebP; it is drawn at most ~260 CSS px wide).
-        for im in imgs:
-            im.set("href", embed(src_path.parent / (im.get("href") or im.get("{%s}href" % XLINK))))
         if imgs:
             if variant == "default":
                 add_def('<filter id="rmImg" color-interpolation-filters="sRGB"><feColorMatrix type="saturate" values="1.22"/></filter>')
@@ -252,11 +281,13 @@ def build(src_path, variant):
                         '<feFuncB type="linear" slope="0.82"/></feComponentTransfer>'
                         '<feColorMatrix type="saturate" values="1.2"/></filter>')
             for im in imgs: im.set("filter", "url(#rmImg)")
-    else:  # tinted: system tint over black; background art drops out
-        for el in bg: root.remove(el)
+    else:  # tinted: system tint over black; the canvas drops out, symbols stay
+        for el in bg:
+            if not any(e.tag == Q("image") for e in walk(el)): root.remove(el)
         black = ET.Element(Q("rect"), {"width": "1024", "height": "1024", "fill": "#000000"})
-        root.insert(list(root).index(ground), black)
-        bg = [black]
+        # Under everything that stayed (the symbol), not over it.
+        root.insert(list(root).index(defs) + 1, black)
+        bg = [black] + [el for el in bg if el in list(root)]
 
     # --- lighting layers, coloured from this icon's own palette
     # A near-white canvas (Autism Muffin) gets a much lighter vignette, which
@@ -265,21 +296,25 @@ def build(src_path, variant):
     canvas_c = norm_colour(canvas.get("fill")) if canvas is not None and canvas.tag == Q("rect") else None
     light_canvas = bool(canvas_c) and to_oklch(canvas_c)[0] > 0.88
     if variant == "default":
+        # Backlight: the icon's own lightest background colour, a little
+        # lighter, same hue and chroma (never white, which reads as haze).
         lL, lC, lH = to_oklch(light[0])
-        bloom = from_oklch(max(lL, 0.9), lC * 0.55, lH); bloom_a = 0.45
-        vig = from_oklch(dark[1] * 0.5, dark[2], dark[3]); vig_a = 0.42
-        gloss_a, edge_a, key_a, rim_a = 0.22, 0.34, 0.5, 0.72
+        bloom = from_oklch(min(0.96, lL + 0.09), lC, lH)
+        flag = len(set(cols)) >= 5
+        bloom_a = 0.22 if flag else 0.4    # flags: keep the stripes crisp
+        vig = from_oklch(dark[1] * 0.55, dark[2], dark[3]); vig_a = 0.16 if flag else 0.3
+        key_a = 0.28
         if light_canvas:
-            vig, vig_a, key_a = from_oklch(0.55, 0.02, dark[3]), 0.16, 0.2
+            vig, vig_a, key_a = from_oklch(0.55, 0.02, dark[3]), 0.12, 0.12
     elif variant == "dark":
         aL, aC, aH = accent[1:]
-        bloom = from_oklch(0.72, max(aC, 0.13) if aC >= 0.02 else aC, aH); bloom_a = 0.58
-        vig = "#000000"; vig_a = 0.55
-        gloss_a, edge_a, key_a, rim_a = 0.12, 0.26, 0.22, 0.6
+        bloom = from_oklch(0.66, max(aC, 0.12) if aC >= 0.02 else aC, aH); bloom_a = 0.5
+        vig = "#000000"; vig_a = 0.5
+        key_a = 0.12
     else:
-        bloom = "#FFFFFF"; bloom_a = 0.16
+        bloom = "#FFFFFF"; bloom_a = 0.1
         vig = "#000000"; vig_a = 0.0
-        gloss_a, edge_a, key_a, rim_a = 0.06, 0.14, 0.0, 0.4
+        key_a = 0.0
 
     add_def(
         f'<radialGradient id="rmBloom" cx="512" cy="560" r="500" gradientUnits="userSpaceOnUse">'
@@ -296,39 +331,39 @@ def build(src_path, variant):
         f'<stop offset=".6" stop-color="{liner_shadow}" stop-opacity="0"/><stop offset="1" stop-color="{liner_shadow}" stop-opacity=".5"/></linearGradient>'
         f'<linearGradient id="rmAO" x1="0" y1="660" x2="0" y2="730" gradientUnits="userSpaceOnUse">'
         f'<stop offset="0" stop-color="{liner_shadow}" stop-opacity=".55"/><stop offset="1" stop-color="{liner_shadow}" stop-opacity="0"/></linearGradient>'
-        f'<clipPath id="rmLinerClip"><polygon points="300,662 724,662 624,895 400,895"/></clipPath>'
-        f'<linearGradient id="rmRim" x1="0" y1="290" x2="0" y2="560" gradientUnits="userSpaceOnUse">'
-        f'<stop offset="0" stop-color="#FFFFFF" stop-opacity=".85"/><stop offset=".55" stop-color="#FFFFFF" stop-opacity=".18"/>'
-        f'<stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>'
-        f'<radialGradient id="rmGloss" cx="330" cy="-80" r="660" gradientUnits="userSpaceOnUse">'
-        f'<stop offset="0" stop-color="#FFFFFF" stop-opacity="{gloss_a}"/><stop offset=".55" stop-color="#FFFFFF" stop-opacity="{gloss_a * 0.35:.3f}"/>'
-        f'<stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>'
+        f'<clipPath id="rmLinerClip">{"".join(pleat_polys)}</clipPath>'
         f'<radialGradient id="rmKey" cx="170" cy="110" r="900" gradientUnits="userSpaceOnUse">'
         f'<stop offset="0" stop-color="#FFFFFF" stop-opacity="{key_a}"/><stop offset=".7" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>'
         f'<linearGradient id="rmDomeShade" x1="0" y1="470" x2="0" y2="660" gradientUnits="userSpaceOnUse">'
         f'<stop offset="0" stop-color="{dome_shadow}" stop-opacity="0"/><stop offset="1" stop-color="{dome_shadow}" stop-opacity=".42"/></linearGradient>'
-        f'<filter id="rmBlur14" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>'
-        f'<linearGradient id="rmEdge" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">'
-        f'<stop offset="0" stop-color="#FFFFFF" stop-opacity="{edge_a}"/><stop offset=".45" stop-color="#FFFFFF" stop-opacity="{edge_a * 0.1:.3f}"/>'
-        f'<stop offset="1" stop-color="#FFFFFF" stop-opacity="{edge_a * 0.5:.3f}"/></linearGradient>'
+
     )
 
     def el(tag, **attrs):
         return ET.Element(Q(tag), {k.replace("_", "-"): str(v) for k, v in attrs.items()})
 
+    if variant == "tinted":
+        ground.set("opacity", "0")
+        for f in walk(defs):
+            if f.tag == Q("feDropShadow"): f.set("flood-opacity", "0")
     gi = list(root).index(ground)
     # Background lighting sits between the background art and the character.
-    root.insert(gi, el("rect", width=1024, height=1024, fill="url(#rmVig)"))
-    root.insert(gi, el("circle", cx=512, cy=560, r=500, fill="url(#rmBloom)"))
+    if variant != "tinted":
+        root.insert(gi, el("rect", width=1024, height=1024, fill="url(#rmVig)"))
+        root.insert(gi, el("circle", cx=512, cy=560, r=500, fill="url(#rmBloom)"))
     if key_a:
         root.insert(gi, el("rect", width=1024, height=1024, fill="url(#rmKey)", style="mix-blend-mode:soft-light"))
     # Softer, deeper contact shadow under the existing one.
     gi = list(root).index(ground)
-    root.insert(gi, el("ellipse", cx=512, cy=914, rx=268, ry=40, fill=flood,
-                       opacity=0.42 if variant != "tinted" else 0.5, filter="url(#rmBlur18)"))
+    if variant == "dark":
+        ground.set("fill", "#000000")
+        ground.set("opacity", str(max(0.3, float(ground.get("opacity", 0.2)))))
+    if variant != "tinted":
+        root.insert(gi, el("ellipse", cx=512, cy=914, rx=268, ry=40, fill=flood if variant == "default" else "#000000",
+                           opacity=0.42 if variant == "default" else 0.5, filter="url(#rmBlur18)"))
 
-    # Rim light along the dome, right after the dome and its sheen, under
-    # berries, face and accessories.
+    # Shading on the underside of the dome, right after the dome and its
+    # sheen, under berries, face and accessories.
     domes = [e for e in walk(root) if is_dome(e)]
     if domes:
         parent = next(p for p in walk(root) if domes[-1] in list(p))
@@ -337,9 +372,6 @@ def build(src_path, variant):
         idx = list(parent).index(domes[-1]) + 1
         dome_fx = el("g", clip_path="url(#rmDomeClip)")
         dome_fx.append(el("rect", x=220, y=470, width=590, height=200, fill="url(#rmDomeShade)"))
-        dome_fx.append(el("ellipse", cx=418, cy=388, rx=96, ry=46, fill="#FFFFFF",
-                          opacity=0.3 if variant != "tinted" else 0.2, transform="rotate(-24 418 388)", filter="url(#rmBlur14)"))
-        dome_fx.append(el("path", d=norm_d(d), fill="none", stroke="url(#rmRim)", stroke_width=18, opacity=rim_a))
         parent.insert(idx, dome_fx)
 
     # Liner: ambient occlusion under the dome's lip and cylinder shading.
@@ -349,10 +381,6 @@ def build(src_path, variant):
     li = [i for i, c in enumerate(root) if any(e.tag == Q("polygon") for e in walk(c))]
     root.insert((li[0] + 1) if li else len(root), shade)
 
-    # Glass: top highlight and edge rim, over everything.
-    root.append(el("rect", width=1024, height=1024, fill="url(#rmGloss)"))
-    root.append(el("rect", x=3, y=3, width=1018, height=1018, rx=228, fill="none",
-                   stroke="url(#rmEdge)", stroke_width=4))
 
     if variant == "tinted":
         # iOS tints by luminance, so dark artwork (Neon Cyber) is lifted to
