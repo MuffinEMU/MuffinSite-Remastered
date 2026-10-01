@@ -55,6 +55,34 @@ rainbow header stops) feeds the glows; the button gradient (`muffinTopLight` →
 mode. The theme lab shows each theme as a small piece of the app (background, card,
 button) with its matching app icon, and the hero icon changes with it.
 
+## App icons, remastered
+
+`icons/source/` holds the 31 original icon SVGs (identical to the icons the app
+ships; `bakery.svg` is the app's "original" icon). `tools/remaster_icons.py`
+rebuilds each one into three variants in `assets/icons/`:
+
+| File | Appearance |
+| --- | --- |
+| `<id>.svg` | Default: background hues richer at the same hue and lightness |
+| `<id>-dark.svg` | Dark: background deepened at the same hue, muffin backlit |
+| `<id>-tinted.svg` | Tinted (iOS 18): greyscale muffin on black, for the system tint |
+
+The artwork itself is never redrawn: the background and the character are
+split at the ground shadow, and lighting is added from each icon's own colours
+(key light, backlight bloom, vignette, material-coloured shading on the dome
+and liner, dome rim light, glass highlight and edge rim). The site uses the
+default or dark variant to match its mode, and the home page has a gallery of
+all 31 with a Default / Dark / Tinted switch.
+
+```sh
+python3 tools/remaster_icons.py
+```
+
+The app still ships the original icons. To adopt these, render each SVG to a
+1024px PNG (any renderer with SVG filter and blend support, e.g. Chrome or
+resvg) and add them to the app's `AltIcon-<id>.appiconset` as the "any",
+"dark" and "tinted" appearances.
+
 ## Keeping it in step with the live site
 
 The live site in `kiddreads/MuffinEMU/docs` stays the source of truth for the words

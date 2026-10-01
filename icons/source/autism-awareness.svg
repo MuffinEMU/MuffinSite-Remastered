@@ -1,0 +1,62 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <title>Muffin EMU — Autism Muffin (Autism Acceptance) special edition</title>
+  <desc>Official rainbow infinity autism-acceptance symbol filling the background, muffin mascot centered in front.</desc>
+  <defs>
+    <linearGradient id="dome" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFF6E9"/>
+      <stop offset="1" stop-color="#F2DFC0"/>
+    </linearGradient>
+    <radialGradient id="sheen" cx="0.35" cy="0.22" r="0.65">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="s" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#8A7A5C" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" fill="#FFFFFF"/>
+
+  <!-- official rainbow infinity, raised so the loop's linking crossing point clears the muffin's head instead of hiding entirely behind it -->
+  <image href="assets/autism-infinity-official.png" x="-88" y="-136" width="1200" height="800"/>
+
+  <!-- tight white silhouette so the muffin reads crisply against the rings, without hiding them -->
+  <path d="M300,650 C265,645 225,630 232,600 C238,565 240,530 255,500 C275,460 305,415 340,380 C370,350 400,330 430,320 C455,312 485,300 512,295 C539,300 569,312 594,320 C624,330 654,350 684,380 C719,415 749,460 769,500 C784,530 786,565 792,600 C799,630 759,645 724,650 L624,895 L596,900 L568,904 L540,906 L512,907 L484,906 L456,904 L428,900 L400,895 L300,650 Z"
+        fill="#FFFFFF" filter="url(#s)" transform="translate(512,600) scale(1.07) translate(-512,-600)"/>
+
+  <!-- grounding shadow -->
+  <ellipse cx="512" cy="905" rx="235" ry="30" fill="#8A7A5C" opacity="0.16"/>
+
+  <!-- muffin mascot, full size, centered -->
+  <g>
+    <polygon points="300,650 353,650 428,900 400,895" fill="#FDF6EC"/>
+    <polygon points="353,650 406,650 456,904 428,900" fill="#F0DFC3"/>
+    <polygon points="406,650 459,650 484,906 456,904" fill="#FDF6EC"/>
+    <polygon points="459,650 512,650 512,907 484,906" fill="#F0DFC3"/>
+    <polygon points="512,650 565,650 540,906 512,907" fill="#FDF6EC"/>
+    <polygon points="565,650 618,650 568,904 540,906" fill="#F0DFC3"/>
+    <polygon points="618,650 671,650 596,900 568,904" fill="#FDF6EC"/>
+    <polygon points="671,650 724,650 624,895 596,900" fill="#F0DFC3"/>
+  </g>
+  <path d="M300,650 C265,645 225,630 232,600 C238,565 240,530 255,500 C275,460 305,415 340,380 C370,350 400,330 430,320 C455,312 485,300 512,295 C539,300 569,312 594,320 C624,330 654,350 684,380 C719,415 749,460 769,500 C784,530 786,565 792,600 C799,630 759,645 724,650 C660,660 380,660 300,650 Z" fill="url(#dome)"/>
+  <path d="M300,650 C265,645 225,630 232,600 C238,565 240,530 255,500 C275,460 305,415 340,380 C370,350 400,330 430,320 C455,312 485,300 512,295 C539,300 569,312 594,320 C624,330 654,350 684,380 C719,415 749,460 769,500 C784,530 786,565 792,600 C799,630 759,645 724,650 C660,660 380,660 300,650 Z" fill="url(#sheen)"/>
+  <g stroke="#D9A23C" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.4">
+    <path d="M503,308 Q513,346 507,392"/>
+  </g>
+  <g fill="#6C63FF">
+    <circle cx="392" cy="440" r="22"/>
+  </g>
+  <g fill="#E4405C">
+    <circle cx="646" cy="450" r="20"/>
+  </g>
+  <rect x="480" y="395" width="36" height="36" fill="#4CAF6D"/>
+  <g>
+    <ellipse cx="407" cy="538" rx="26" ry="15" fill="#F2A6A0" opacity="0.3"/>
+    <ellipse cx="617" cy="538" rx="26" ry="15" fill="#F2A6A0" opacity="0.3"/>
+    <ellipse cx="460" cy="502" rx="15" ry="19" fill="#2E1B10"/>
+    <ellipse cx="564" cy="502" rx="15" ry="19" fill="#2E1B10"/>
+    <circle cx="455" cy="495" r="5" fill="#FFFFFF"/>
+    <circle cx="559" cy="495" r="5" fill="#FFFFFF"/>
+    <path d="M480,546 Q512,572 544,546" stroke="#5C2E10" stroke-width="9" stroke-linecap="round" fill="none"/>
+  </g>
+</svg>

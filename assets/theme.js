@@ -451,7 +451,11 @@
 
   // Folder this script lives in (assets/), for icon URLs before <body> exists.
   var assetsBase = (document.currentScript && document.currentScript.src || "").replace(/[^/]*$/, "");
-  function iconUrl(t) { return assetsBase + "icons/" + t.id + ".png"; }
+  // Remastered icons (tools/remaster_icons.py): the dark appearance in dark mode.
+  function iconUrl(t, variant) {
+    var v = variant != null ? variant : (isLight() ? "" : "-dark");
+    return assetsBase + "icons/" + t.id + v + ".svg";
+  }
 
   /* Point every img[data-theme-icon] parsed so far at the current theme's
      icon. Called inline right after the hero icon, so the first paint already

@@ -700,6 +700,71 @@ strong { font-weight: 600; color: var(--text); }
 .lab-meta { margin-top: 18px; font: 500 .85rem/1.5 var(--font-mono); color: var(--text-3); }
 @media (max-width: 900px) { .lab { grid-template-columns: 1fr; } }
 
+/* --------------------------------------------------------- icon gallery */
+.gallery-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin-bottom: clamp(28px, 5vh, 48px); }
+.gallery-head .section-head { margin-bottom: 0; }
+.seg {
+  position: relative; display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+  padding: 4px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--surface-2);
+}
+.seg button {
+  position: relative; z-index: 1; border: 0; background: none; cursor: pointer;
+  padding: .62rem 1.05rem; border-radius: 999px;
+  font: 500 .9rem/1 var(--font-body); color: var(--text-2);
+  transition: color .3s var(--ease);
+}
+.seg button[aria-pressed="true"] { color: var(--on-b); }
+.seg-thumb {
+  position: absolute; z-index: 0; top: 4px; bottom: 4px; left: 4px;
+  width: calc((100% - 8px) / 3); border-radius: 999px;
+  background: linear-gradient(135deg, var(--b1), var(--b2));
+  box-shadow: 0 6px 18px -8px var(--b2);
+  transform: translateX(calc(var(--seg, 0) * 100%));
+  transition: transform .55s var(--ease);
+}
+
+/* Scroll assembly: --p (0..1) is set on the grid by app.js as the section
+   scrolls in; each icon has a scatter offset (--dx, --dy, --rot) and a
+   stagger (--s, its distance from the centre), so the cloud settles into the
+   grid from the middle out. Without JS --p stays 1 (plain grid). */
+.gallery-grid {
+  --p: 1;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 104px), 1fr));
+  gap: clamp(14px, 2.2vw, 26px) clamp(10px, 1.6vw, 20px);
+  perspective: 1200px;
+}
+.gicon {
+  --q: clamp(0, calc(1 - (var(--p) * 1.7 - var(--s, 0) * .7)), 1);
+  position: relative; display: grid; justify-items: center; gap: 10px;
+  padding: 0; border: 0; background: none; cursor: pointer; color: var(--text-3);
+  font: 500 .74rem/1.2 var(--font-body);
+  transform: translate3d(calc(var(--dx) * var(--q)), calc(var(--dy) * var(--q)), calc(var(--q) * -220px)) rotate(calc(var(--rot) * var(--q)));
+  opacity: calc(1 - var(--q) * .85);
+  will-change: transform;
+}
+.gicon .gi {
+  position: relative; width: 100%; aspect-ratio: 1; border-radius: 22.4%;
+  transition: transform .5s var(--ease), box-shadow .5s var(--ease);
+  box-shadow: 0 10px 26px -14px rgba(0, 0, 0, .7);
+}
+.gicon img {
+  width: 100%; height: 100%; border-radius: inherit; display: block;
+  transition: transform .32s var(--ease-in-out), opacity .32s var(--ease-in-out);
+  backface-visibility: hidden;
+}
+/* Appearance switch: each icon flips edge-on, swaps, and flips back. */
+.gicon.flip img { transform: rotateY(90deg) scale(.92); opacity: .35; }
+.gicon:hover .gi, .gicon:focus-visible .gi { transform: translateY(-8px) scale(1.07); box-shadow: 0 22px 44px -16px var(--glow, var(--a2)), 0 0 0 1px rgba(255, 255, 255, .14); }
+.gicon[aria-pressed="true"] .gi { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent-text), 0 16px 36px -14px var(--glow, var(--a2)); }
+.gicon .gname { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color .3s; }
+.gicon:hover .gname, .gicon[aria-pressed="true"] .gname { color: var(--text); }
+.gicon:focus-visible { outline: none; box-shadow: none; }
+.gicon:focus-visible .gname { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 600px) {
+  .gallery-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .seg button { padding: .55rem .8rem; }
+}
+
 /* -------------------------------------------------------------- install */
 .install-panel {
   position: relative; overflow: hidden;
@@ -976,6 +1041,8 @@ tbody tr:hover { background: var(--surface-2); }
   .rail-sticky { position: static; height: auto; padding: 100px 0; }
   .rail-track { transform: none !important; overflow-x: auto; scroll-snap-type: x mandatory; }
   .rail-track .card { scroll-snap-align: start; }
+  .gallery-grid { --p: 1 !important; }
+  .gicon.flip img { transform: none; opacity: 1; }
   .marquee-track { flex-wrap: wrap; width: auto; justify-content: center; gap: 20px 40px; padding: 0 var(--gutter); }
   .marquee-track [aria-hidden="true"] { display: none; }
   @view-transition { navigation: none; }
