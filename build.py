@@ -16,11 +16,19 @@ written once. No dependencies beyond the standard library.
     python3 build.py --serve    # build, then serve site/ on :8000
 """
 import html
+import os
 import pathlib
+import re
 import shutil
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent
+# Where the site is served from (for the 404 page's absolute paths).
+SITE_BASE = os.environ.get("SITE_BASE", "/MuffinEMU/")
+# A preview build (PREVIEW=1) is kept out of search engines and out of the
+# real site's GoatCounter numbers. The canonical URLs still point at the
+# real site.
+PREVIEW = os.environ.get("PREVIEW") == "1"
 CONTENT = ROOT / "content"
 OUT = ROOT / "site"
 # Pages that stay in the MuffinEMU repo (the SideStore feeds, the GamePad
@@ -77,8 +85,21 @@ def head(seo, prefix):
 </head>"""
 
 
+FINEPRINT = (
+    'This is a preview of the redesigned site. The official MuffinEMU site is '
+    '<a href="https://kiddreads.github.io/MuffinEMU/">kiddreads.github.io/MuffinEMU</a>.'
+    if PREVIEW else
+    'This site counts page visits with <a href="https://www.goatcounter.com">GoatCounter</a>: '
+    'no cookies, no tracking across sites, no personal data. Fonts are served from this site.'
+)
+
+
 def seo(name):
-    return (CONTENT / "head" / f"{name}.html").read_text()
+    block = (CONTENT / "head" / f"{name}.html").read_text()
+    if PREVIEW:
+        block = re.sub(r'<meta name="robots"[^>]*>\n?', "", block)
+        block = '<meta name="robots" content="noindex, nofollow">\n' + block
+    return block
 
 
 def header(prefix, current):
@@ -137,7 +158,7 @@ def footer(prefix):
         <a href="https://github.com/kiddreads/MuffinEMU/issues">Report an issue</a>
       </nav>
     </div>
-    <p class="fineprint">This site counts page visits with <a href="https://www.goatcounter.com">GoatCounter</a>: no cookies, no tracking across sites, no personal data. Fonts are served from this site.</p>
+    <p class="fineprint">{FINEPRINT}</p>
     <div class="footer-mark" aria-hidden="true">MuffinEMU</div>
   </div>
 </footer>
@@ -153,7 +174,7 @@ def footer(prefix):
 </dialog>
 
 <script src="{prefix}assets/app.js"></script>
-<script data-goatcounter="https://muffinemu.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+{"" if PREVIEW else '<script data-goatcounter="https://muffinemu.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>'}
 </body>
 </html>
 """
@@ -205,7 +226,7 @@ def build_docs():
 def build_404():
     # GitHub Pages serves this at whatever missing URL was asked for, so every
     # path in it is absolute.
-    p = "/MuffinEMU/"
+    p = SITE_BASE
     body = (CONTENT / "404.html").read_text().replace("/MuffinEMU/icon.png", p + "assets/icon.png")
     page = (
         head(seo("404"), p) + f'\n<body data-base="{p}">\n' + sprite() + header(p, "")

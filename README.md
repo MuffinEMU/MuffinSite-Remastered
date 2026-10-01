@@ -1,4 +1,4 @@
-# MuffinEMU site
+# MuffinSite Remastered
 
 The redesigned website for [MuffinEMU](https://github.com/kiddreads/MuffinEMU), the
 Wii U emulator for iPhone and iPad. Plain HTML, CSS and JavaScript with a small
@@ -57,13 +57,14 @@ missing.
 
 ## Going live
 
-Nothing here is published. Two ways to ship it when it's approved:
+**Preview:** every push to `main` publishes a preview build to
+<https://kiddreads.github.io/MuffinSite-Remastered/> (`PREVIEW=1`: kept out of search
+engines, not counted in GoatCounter, footer points to the official site; canonical
+URLs stay on the official site).
 
-1. **Preview:** set this repo's Pages source to GitHub Actions and run the
-   *Publish preview to Pages* workflow by hand.
-2. **Replace the live site:** copy the contents of `site/` into `MuffinEMU/docs/`.
-   Leave everything else there alone: the SideStore/AltStore/TrollStore feeds
-   (`*.json`), `gamepad-layout/`, the Markdown notes, `_config.yml` and
-   `_includes/`. The SideStore source URL and every page URL stay the same.
-   The old `site.css`, `docs.css` and `theme.js` can be deleted afterwards; nothing
-   outside the old pages loads them.
+**Replace the live site:** build without `PREVIEW` (`python3 build.py`), then copy
+the contents of `site/` into `MuffinEMU/docs/`. Leave everything else there alone:
+the SideStore/AltStore/TrollStore feeds (`*.json`), `gamepad-layout/`, the Markdown
+notes, `_config.yml` and `_includes/`. The SideStore source URL and every page URL
+stay the same. The old `site.css`, `docs.css` and `theme.js` can be deleted
+afterwards; nothing outside the old pages loads them.

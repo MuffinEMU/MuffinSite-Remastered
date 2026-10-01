@@ -1,9 +1,11 @@
-# Builds site/ and publishes it to GitHub Pages. Manual only: nothing goes live
-# until someone runs this on purpose (Settings > Pages > Source must be
-# "GitHub Actions" first).
+# Builds site/ as a preview and publishes it to this repo's GitHub Pages
+# (kiddreads.github.io/MuffinSite-Remastered). Preview builds are noindex,
+# skip GoatCounter, and keep canonical URLs on the official site.
 name: Publish preview to Pages
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -24,6 +26,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: python3 build.py
+        env:
+          PREVIEW: "1"
+          SITE_BASE: /MuffinSite-Remastered/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
