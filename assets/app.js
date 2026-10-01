@@ -258,15 +258,8 @@
     if (t.stops) return "conic-gradient(" + t.stops.light.slice(0, 7).concat(t.stops.light[0]).join(", ") + ")";
     return "linear-gradient(135deg, " + t.top[0] + ", " + t.bottom[0] + ")";
   }
-  function previewBg(t) {
-    var light = T.isLight();
-    var pick = function (p) { return light ? p[0] : p[1]; };
-    if (t.stops) {
-      var s = light ? t.stops.light : t.stops.dark, l = t.stops.locations;
-      return "linear-gradient(180deg, " + s.map(function (c, i) { return c + " " + (l[i] * 100 * 4).toFixed(1) + "%"; }).join(", ") + ")";
-    }
-    return "linear-gradient(135deg, " + pick(t.top) + ", " + pick(t.bottom) + ")";
-  }
+  // The app's real background for the current mode.
+  function previewBg(t) { return T.backgroundOf(t, T.isLight()); }
 
   var orbs = $("[data-orbs]");
   var lab = $("[data-lab]");
@@ -304,16 +297,33 @@
   }
 
   function syncTheme(t) {
+    var k = T.isLight() ? 0 : 1;
     $$("[data-theme-option]").forEach(function (el) {
       el.setAttribute("aria-pressed", el.getAttribute("data-theme-option") === t.id ? "true" : "false");
       if (el._bg) el._bg.style.background = previewBg(el._theme);
     });
     $$("[data-theme-name]").forEach(function (el) { el.textContent = t.name; });
+    var heroIcon = $(".hero-icon");
+    if (heroIcon) swapImg(heroIcon, "hero-img", iconSrc(t), 512);
     if (lab) {
+      // The preview is a small piece of the app in this theme: its background,
+      // a card (cream, wrapper stroke, brown text) and a primary button
+      // (muffinTopGradient with sparkleCream text).
       lab.style.setProperty("--lab-bg", previewBg(t));
+      lab.style.setProperty("--lp-card", t.cream[k]);
+      lab.style.setProperty("--lp-stroke", t.wrapper[k]);
+      lab.style.setProperty("--lp-text", t.brownDarkest[k]);
+      lab.style.setProperty("--lp-sub", t.brownMid[k]);
+      lab.style.setProperty("--lp-b1", t.muffinTop[k]);
+      lab.style.setProperty("--lp-b2", t.muffinDark[k]);
+      lab.style.setProperty("--lp-on", T.buttonText(t, k));
       var sw = $$(".lp-swatches i", lab);
-      [t.top, t.navy, t.pixel, t.blush].forEach(function (pair, i) { if (sw[i]) sw[i].style.background = pair[0]; });
-      swapIcon(t);
+      [[t.top, "Background"], [t.muffinTop, "Buttons"], [t.cream, "Cards"], [t.pixel, "Accent"]].forEach(function (p, i) {
+        if (sw[i]) { sw[i].style.background = p[0][k]; sw[i].title = p[1] + " " + p[0][k]; }
+      });
+      var stage = $(".lp-stage", lab), mini = $(".lp-mini", lab);
+      if (stage) swapImg(stage, "lp-icon", iconSrc(t), 192);
+      if (mini) mini.src = iconSrc(t);
       var nm = $(".lp-name", lab); if (nm) nm.textContent = t.name;
       var sub = $(".lp-sub", lab);
       if (sub) sub.textContent = (T.current() + 1) + " / " + T.THEMES.length + (t.pro ? " · Pro, unlocked with a code" : "");
@@ -323,27 +333,25 @@
   function iconSrc(t) { return base + "assets/icons/" + t.id + ".png"; }
   var preloaded = {};
   function preload(t) { if (!preloaded[t.id]) { preloaded[t.id] = new Image(); preloaded[t.id].src = iconSrc(t); } }
-  function swapIcon(t) {
-    var stage = $(".lp-stage", lab), mini = $(".lp-mini", lab), src = iconSrc(t);
-    if (mini) mini.src = src;
-    if (!stage) return;
-    var cur = $(".lp-icon:not(.out)", stage);
+  // Cross-fade an icon inside `box`: the new image animates in over the old one,
+  // which animates out and is removed. Swaps only once the new image has
+  // decoded, so it never flashes blank.
+  function swapImg(box, cls, src, size) {
+    var cur = $("img." + cls + ":not(.out)", box);
     if (cur && cur.getAttribute("src") === src) return;
     var img = doc.createElement("img");
-    img.className = "lp-icon"; img.alt = ""; img.width = 192; img.height = 192; img.src = src;
+    img.className = cls; img.alt = ""; img.width = size; img.height = size; img.src = src;
     function show() {
-      stage.appendChild(img);
-      if (cur) {
-        if (reduced) cur.remove();
-        else { cur.classList.add("out"); cur.addEventListener("animationend", function () { cur.remove(); }); }
-      }
+      box.appendChild(img);
+      if (!cur) return;
+      if (reduced) cur.remove();
+      else { cur.classList.add("out"); cur.addEventListener("animationend", function () { cur.remove(); }); }
     }
-    // Swap only once the new image has decoded, so it never flashes blank.
     if (img.decode) img.decode().then(show, show); else show();
   }
   if (orbs) {
-    $$(".orb-btn", orbs).forEach(function (b) {
-      var t = T.THEMES[$$(".orb-btn", orbs).indexOf(b)];
+    $$(".orb-btn", orbs).forEach(function (b, i) {
+      var t = T.THEMES[i];
       b.addEventListener("pointerenter", function () { preload(t); });
       b.addEventListener("focus", function () { preload(t); });
     });

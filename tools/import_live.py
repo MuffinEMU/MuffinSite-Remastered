@@ -16,7 +16,8 @@ this runs a parity check: every heading, paragraph and list item in the live
 home page's <main> must appear, word for word, in content/home.html. Anything
 missing is printed and the script exits non-zero.
 
-The theme table in theme.js is refreshed from the live theme.js as well.
+The theme table comes from the app itself, not the site: see
+tools/themes_from_swift.py.
 
 Static files the site needs at its root (sitemap, IndexNow key) are copied to
 static/.
@@ -85,13 +86,6 @@ def main():
         src = (live / "404.html").read_text()
         (CONTENT / "head" / "404.html").write_text(head_block(src))
         (CONTENT / "404.html").write_text(main_block(src))
-
-    # The theme table is the app's own data; keep it in step with the live copy.
-    m = re.search(r"^  var THEMES = \[.*?^  \];\n", (live / "theme.js").read_text(), re.S | re.M)
-    if m:
-        (ROOT / "tools" / "themes_data.js").write_text(m.group(0))
-        tj = ROOT / "assets" / "theme.js"
-        tj.write_text(re.sub(r"^  var THEMES = \[.*?^  \];\n", lambda _: m.group(0), tj.read_text(), flags=re.S | re.M))
 
     static = ROOT / "static"
     static.mkdir(exist_ok=True)

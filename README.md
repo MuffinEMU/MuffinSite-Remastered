@@ -39,18 +39,34 @@ python3 build.py --serve   # build into site/ and serve it on http://localhost:8
 | `build.py` | Wraps every body in the shared shell and writes `site/` |
 | `tools/import_live.py` | Re-imports content from the MuffinEMU repo's `docs/` |
 
+## Theme colours
+
+The 31 themes come straight from the iOS app, not from the old site:
+
+```sh
+python3 tools/themes_from_swift.py /path/to/MuffinEMU/src/ios/App/MuffinThemePresets.swift
+```
+
+Each token is used for the role it plays in the app: the background gradient
+(drawn exactly as `MuffinTheme.backgroundGradient` does, including Autism Muffin's
+rainbow header stops) feeds the glows; the button gradient (`muffinTopLight` →
+`muffinTopDark`, with `sparkleCream` text) styles every primary button and icon tile;
+`pixelBlue` and `blushPink` are the accents. Light and dark values follow the site's
+mode. The theme lab shows each theme as a small piece of the app (background, card,
+button) with its matching app icon, and the hero icon changes with it.
+
 ## Keeping it in step with the live site
 
-The live site in `kiddreads/MuffinEMU/docs` stays the source of truth for the words,
-the metadata and the theme data; this repo owns only the presentation.
+The live site in `kiddreads/MuffinEMU/docs` stays the source of truth for the words
+and the metadata (the app's Swift source is the source for theme colours); this repo owns only the presentation.
 
 ```sh
 python3 tools/import_live.py /path/to/MuffinEMU/docs
 python3 build.py
 ```
 
-The importer copies every docs page body, every SEO head, the 404, the sitemap, the
-IndexNow key and the theme table. The home page is laid out by hand, so the importer
+The importer copies every docs page body, every SEO head, the 404, the sitemap and
+the IndexNow key. The home page is laid out by hand, so the importer
 instead checks that every heading, paragraph and list item on the live home page
 appears word for word in `content/home.html`, and exits non-zero if anything is
 missing.
