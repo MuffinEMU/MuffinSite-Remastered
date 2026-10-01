@@ -234,43 +234,103 @@
       b.addEventListener("pointerleave", function () { b.style.setProperty("--mx", "0px"); b.style.setProperty("--my", "0px"); });
     });
 
-    if (heroVisual) {
-      /* The icon turns toward the cursor wherever it is on the page. Tilt
-         grows with distance from the icon and levels off smoothly (tanh),
-         so there is no boundary where it would snap. One rAF loop eases the
-         current angle toward the target and stops itself once settled. */
-      var tiltIcon = $(".hero-icon", heroVisual);
-      var MAX_TILT = 16, EASE = 0.12;
-      var tilt = { x: 0, y: 0 }, aim = { x: 0, y: 0 }, pointer = null, tiltRaf = 0;
-      var tiltFrame = function () {
-        tiltRaf = 0;
-        if (pointer) {
-          var r = heroVisual.getBoundingClientRect();
-          if (r.bottom > 0 && r.top < window.innerHeight) {
-            var reach = Math.max(240, r.width);
-            var dx = pointer.x - (r.left + r.width / 2), dy = pointer.y - (r.top + r.height / 2);
-            aim.y = MAX_TILT * Math.tanh(dx / reach);
-            aim.x = -MAX_TILT * Math.tanh(dy / reach);
-          } else { aim.x = 0; aim.y = 0; }
-        }
-        tilt.x += (aim.x - tilt.x) * EASE;
-        tilt.y += (aim.y - tilt.y) * EASE;
-        tiltIcon.style.setProperty("--tiltX", tilt.x.toFixed(2) + "deg");
-        tiltIcon.style.setProperty("--tiltY", tilt.y.toFixed(2) + "deg");
-        if (Math.abs(aim.x - tilt.x) > 0.01 || Math.abs(aim.y - tilt.y) > 0.01) tiltRaf = requestAnimationFrame(tiltFrame);
-      };
-      var tiltKick = function () { if (!tiltRaf) tiltRaf = requestAnimationFrame(tiltFrame); };
+  }
+
+  /* ------------------------------------------------------ hero icon */
+  /* The icon behaves like a physical object. Each property (tilt, drift,
+     lift, highlight) is a damped spring stepped with the real frame time, so
+     it moves the same at 60, 120 or 144 Hz and settles with a slight
+     overshoot. With a mouse, the icon turns toward the cursor anywhere on the
+     page (strength levels off with distance, so there is no edge to snap at),
+     drifts a few pixels toward it and lifts as it gets close. With no cursor
+     (touch screens, or the mouse is away) it sways gently on its own. A click
+     gives it a small squash. The loop sleeps when the hero is off screen or
+     the tab is hidden, and none of this runs under reduced motion. */
+  var heroIcon0 = heroVisual && $(".hero-icon", heroVisual);
+  if (heroIcon0 && !reduced) (function () {
+    var icon = heroIcon0;
+    function Spring(stiff, damp) { this.x = 0; this.v = 0; this.k = stiff; this.c = damp; this.to = 0; }
+    Spring.prototype.step = function (dt) {
+      var a = this.k * (this.to - this.x) - this.c * this.v;
+      this.v += a * dt; this.x += this.v * dt;
+    };
+    Spring.prototype.rest = function () { return Math.abs(this.to - this.x) < 0.002 && Math.abs(this.v) < 0.002; };
+    // Stiffness/damping: ~0.85 of critical damping gives a soft, slight overshoot.
+    var rx = new Spring(140, 20), ry = new Spring(140, 20);
+    var tx = new Spring(110, 18), ty = new Spring(110, 18);
+    var lift = new Spring(220, 22); lift.x = lift.to = 1;
+    var springs = [rx, ry, tx, ty, lift];
+
+    var pointer = null, lastMove = 0, raf = 0, last = 0, t0 = performance.now();
+    var IDLE_AFTER = 2600; // ms without mouse movement before the idle sway takes over
+
+    function aim(now) {
+      var mouseActive = pointer && now - lastMove < IDLE_AFTER;
+      if (mouseActive) {
+        var r = heroVisual.getBoundingClientRect();
+        var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+        var dx = pointer.x - cx, dy = pointer.y - cy, reach = Math.max(240, r.width);
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        var near = Math.exp(-Math.pow(dist / (r.width * 0.42), 2)); // 1 over the icon, ~0 far away
+        var max = 11 + 7 * near;
+        ry.to = max * Math.tanh(dx / reach);
+        rx.to = -max * Math.tanh(dy / reach);
+        tx.to = 9 * Math.tanh(dx / reach);
+        ty.to = 9 * Math.tanh(dy / reach);
+        lift.to = 1 + 0.045 * near;
+      } else {
+        // Idle sway: two slow, unrelated sines, so it never looks like a loop.
+        var t = (now - t0) / 1000;
+        ry.to = 7 * Math.sin(t * 0.55) + 2 * Math.sin(t * 1.3);
+        rx.to = 4.5 * Math.sin(t * 0.41 + 1.2);
+        tx.to = 3 * Math.sin(t * 0.55);
+        ty.to = 0;
+        lift.to = 1;
+      }
+    }
+
+    function frame(now) {
+      raf = 0;
+      if (heroVisual.classList.contains("paused") || doc.hidden) { last = 0; return; }
+      var dt = last ? Math.min(0.034, (now - last) / 1000) : 1 / 60;
+      last = now;
+      aim(now);
+      // Two half-steps per frame keep the springs stable at low frame rates.
+      for (var i = 0; i < 2; i++) springs.forEach(function (s) { s.step(dt / 2); });
+      icon.style.setProperty("--tiltX", rx.x.toFixed(3) + "deg");
+      icon.style.setProperty("--tiltY", ry.x.toFixed(3) + "deg");
+      icon.style.setProperty("--tx", tx.x.toFixed(2) + "px");
+      icon.style.setProperty("--ty", ty.x.toFixed(2) + "px");
+      icon.style.setProperty("--lift", lift.x.toFixed(4));
+      // The highlight slides opposite the tilt, as a reflection would.
+      icon.style.setProperty("--gx", (-12 - ry.x * 1.6).toFixed(2) + "%");
+      icon.style.setProperty("--gy", (-12 + rx.x * 1.6).toFixed(2) + "%");
+      raf = requestAnimationFrame(frame);
+    }
+    function wake() { if (!raf) { last = 0; raf = requestAnimationFrame(frame); } }
+
+    if (finePointer) {
       window.addEventListener("pointermove", function (e) {
         if (e.pointerType && e.pointerType !== "mouse" && e.pointerType !== "pen") return;
         pointer = { x: e.clientX, y: e.clientY };
-        tiltKick();
+        lastMove = performance.now();
+        wake();
       }, { passive: true });
-      // Cursor left the window or the tab lost focus: ease back to facing forward.
-      var tiltRest = function () { pointer = null; aim.x = 0; aim.y = 0; tiltKick(); };
-      doc.documentElement.addEventListener("mouseleave", tiltRest);
-      window.addEventListener("blur", tiltRest);
+      var away = function () { pointer = null; };
+      doc.documentElement.addEventListener("mouseleave", away);
+      window.addEventListener("blur", away);
     }
-  }
+    // A click squashes it a little and lets the spring bounce it back.
+    heroVisual.addEventListener("pointerdown", function () { lift.v -= 1.6; wake(); });
+
+    // The pause observer toggles .paused; restart the loop when it comes back.
+    if ("MutationObserver" in window) {
+      new MutationObserver(function () { if (!heroVisual.classList.contains("paused")) wake(); })
+        .observe(heroVisual, { attributes: true, attributeFilter: ["class"] });
+    }
+    doc.addEventListener("visibilitychange", function () { if (!doc.hidden) wake(); });
+    wake();
+  })();
 
   /* --------------------------------------- pause offscreen animation */
   var anims = $$("[data-anim]");
@@ -385,8 +445,8 @@
     });
     $$("[data-theme-name]").forEach(function (el) { el.textContent = t.name; });
     $$("[data-palette-open='theme ']").forEach(function (b) { b.setAttribute("aria-label", "Theme: " + t.name + ". Choose a theme"); });
-    var heroIcon = $(".hero-icon");
-    if (heroIcon) swapImg(heroIcon, "hero-img", iconSrc(t), 192);
+    var heroFace = $(".hero-face");
+    if (heroFace) swapImg(heroFace, "hero-img", iconSrc(t), 192);
     if (lab) {
       // The preview is a small piece of the app in this theme: its background,
       // a card (cream, wrapper stroke, brown text) and a primary button

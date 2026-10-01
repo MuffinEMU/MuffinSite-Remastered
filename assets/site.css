@@ -434,16 +434,29 @@ strong { font-weight: 600; color: var(--text); }
   position: absolute; inset: 30%;
   border-radius: 24%;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, .18), 0 40px 80px -20px rgba(0, 0, 0, .8), 0 0 80px -10px var(--a1);
-  /* Tilt is eased frame by frame in app.js; a CSS transition here would
-     restart on every pointer move and stutter. */
-  transform: perspective(800px) rotateX(var(--tiltX, 0deg)) rotateY(var(--tiltY, 0deg));
+  /* Driven per frame by app.js (spring physics); no CSS transition, which
+     would restart on every update and stutter. */
+  transform: perspective(900px) translate3d(var(--tx, 0px), var(--ty, 0px), 0) rotateX(var(--tiltX, 0deg)) rotateY(var(--tiltY, 0deg)) scale(var(--lift, 1));
   will-change: transform;
   animation: float 6s var(--ease-in-out) infinite alternate;
 }
-.hero-icon img { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: inherit; }
-.hero-icon img.swap-in { animation: icon-in .8s var(--ease) both; }
-.hero-icon img.out { animation: icon-out .5s var(--ease) both; }
-.hero-icon::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(140deg, rgba(255, 255, 255, .35), transparent 40%); mix-blend-mode: overlay; }
+/* The icon's face: clips the images and the moving highlight to the
+   rounded square. */
+.hero-face { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; isolation: isolate; }
+.hero-face img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hero-face img.swap-in { animation: icon-in .8s var(--ease) both; }
+.hero-face img.out { animation: icon-out .5s var(--ease) both; }
+/* Glass highlight: a soft spot that slides across the face opposite the
+   tilt, moved by transform only. */
+.hero-face::after {
+  content: ""; position: absolute; inset: -50%; z-index: 2; pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, .42), rgba(255, 255, 255, .12) 18%, transparent 36%),
+    linear-gradient(140deg, rgba(255, 255, 255, .22), transparent 30%);
+  transform: translate3d(var(--gx, -12%), var(--gy, -12%), 0);
+  mix-blend-mode: soft-light;
+  will-change: transform;
+}
 @keyframes float { to { translate: 0 -14px; } }
 @keyframes chip-float { to { translate: 0 -5px; } }
 .chip {
