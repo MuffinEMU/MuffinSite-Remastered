@@ -129,7 +129,6 @@
   var syEls = $$(".backdrop .grid-lines, .hero-visual, .scroll-cue");
 
   function sizeRail() {
-    measureGallery();
     if (!rail) return;
     if (reduced || !railActive.matches) { rail.style.height = ""; railDistance = 0; railTrack.style.removeProperty("--rail-x"); return; }
     railDistance = Math.max(0, railTrack.scrollWidth - doc.documentElement.clientWidth);
@@ -148,12 +147,6 @@
       if (progressEl) progressEl.style.setProperty("--progress", (sy / max).toFixed(4));
       if (header) body.classList.toggle("scrolled", sy > 24);
       if (!reduced && sy < 2400) syEls.forEach(function (el) { el.style.setProperty("--sy", sy.toFixed(1)); });
-      if (galleryGrid && !reduced) {
-        var vh0 = window.innerHeight;
-        var gp = Math.min(1, Math.max(0, (sy + vh0 - galleryTop - 40) / (vh0 * 0.8)));
-        gp = 1 - Math.pow(1 - gp, 3);
-        if (Math.abs(gp - galleryP) > 0.0005) { galleryP = gp; galleryGrid.style.setProperty("--p", gp.toFixed(4)); }
-      }
       if (rail && railDistance > 0) {
         var p = Math.min(1, Math.max(0, (sy - railTop) / railDistance));
         railTrack.style.setProperty("--rail-x", (-p * railDistance).toFixed(1) + "px");
@@ -516,127 +509,6 @@
       b.addEventListener("pointerenter", function () { preload(t); });
       b.addEventListener("focus", function () { preload(t); });
     });
-  }
-
-  /* ---------------------------------------------------- icon gallery */
-  /* All 31 remastered icons. As the section scrolls in they assemble from a
-     scattered cloud into the grid (CSS reads --p; see site.css). The
-     Original / Default / Dark / Tinted switch flips each icon edge-on in a
-     wave and swaps it once the new image has decoded. Picking an icon
-     applies its theme. The spotlight shows the current theme's icon large,
-     with a drag-to-compare wipe between the original and the chosen
-     version. Until the switch is used, the gallery follows the site's mode. */
-  var gallery = $("[data-gallery]");
-  var galleryGrid = gallery && $("[data-gallery-grid]", gallery);
-  var galleryTop = 0, galleryP = -1, galleryVariant = null, galleryCells = [];
-  function measureGallery() {
-    if (!galleryGrid) return;
-    galleryTop = galleryGrid.getBoundingClientRect().top + window.scrollY;
-  }
-  function galleryShown() { return galleryVariant != null ? galleryVariant : (T.isLight() ? "" : "-dark"); }
-  if (galleryGrid) {
-    var n = T.THEMES.length, mid = (n - 1) / 2;
-    galleryCells = T.THEMES.map(function (t, i) {
-      var b = doc.createElement("button");
-      b.type = "button"; b.className = "gicon";
-      b.setAttribute("data-theme-option", t.id);
-      b.setAttribute("aria-label", t.name + " icon. Use the " + t.name + " theme");
-      // Scatter: a golden-angle spiral (no visible pattern), spread sideways
-      // and below so the cloud rises into place without crossing the heading.
-      var ang = i * 2.39996, rad = 150 + (i % 7) * 46;
-      b.style.setProperty("--dx", Math.round(Math.cos(ang) * rad * 1.5) + "px");
-      b.style.setProperty("--dy", Math.round((Math.sin(ang) * 0.45 + 0.65) * rad) + "px");
-      b.style.setProperty("--rot", (((i * 53) % 44) - 22) + "deg");
-      b.style.setProperty("--s", (Math.abs(i - mid) / mid).toFixed(3));
-      var gi = doc.createElement("span"); gi.className = "gi";
-      var img = doc.createElement("img");
-      img.alt = ""; img.width = 120; img.height = 120; img.loading = "lazy"; img.decoding = "async";
-      img.src = iconSrc(t, galleryShown());
-      gi.appendChild(img);
-      var nm = doc.createElement("span"); nm.className = "gname"; nm.textContent = t.name;
-      b.appendChild(gi); b.appendChild(nm);
-      b.addEventListener("click", function (e) { setTheme(t.id, e); });
-      galleryGrid.appendChild(b);
-      return { t: t, b: b, img: img };
-    });
-    var seg = $("[data-gallery-mode]", gallery), segBtns = seg ? $$("button", seg) : [];
-    var LABEL = { "-original": "Original", "": "Default", "-dark": "Dark", "-tinted": "Tinted" };
-    var spot = $("[data-gspot]", gallery), cmp = spot && $("[data-cmp]", spot);
-    var cmpBefore = cmp && $("[data-cmp-before]", cmp), cmpAfter = cmp && $("[data-cmp-after]", cmp);
-    var cmpTag = cmp && $("[data-cmp-tag]", cmp), cmpRange = cmp && $("[data-cmp-range]", cmp);
-    var spotVariants = spot && $("[data-gspot-variants]", spot), spotShown = null;
-    if (cmpRange) {
-      var setWipe = function () { cmp.style.setProperty("--x", cmpRange.value + "%"); };
-      cmpRange.addEventListener("input", setWipe); setWipe();
-    }
-    // The spotlight: the original on the left of the wipe, the chosen version
-    // on the right (Default when "Original" itself is chosen).
-    var renderSpot = function (animate) {
-      if (!spot) return;
-      var t = T.THEMES[T.current()], v = galleryShown(), right = v === "-original" ? "" : v;
-      var key = t.id + "|" + v + "|" + T.isLight();
-      if (key === spotShown) return;
-      spotShown = key;
-      cmpBefore.src = iconSrc(t, "-original");
-      cmpAfter.src = iconSrc(t, right);
-      cmpTag.textContent = LABEL[right];
-      if (animate && !reduced) { cmp.classList.remove("swap"); void cmp.offsetWidth; cmp.classList.add("swap"); }
-      $("[data-gspot-name]", spot).textContent = t.name;
-      $("[data-gspot-pro]", spot).hidden = !t.pro;
-      spot.style.setProperty("--glow", T.derive(t, T.isLight()).a1);
-      spotVariants.textContent = "";
-      ["-original", "", "-dark", "-tinted"].forEach(function (vv) {
-        var b = doc.createElement("button");
-        b.type = "button";
-        b.setAttribute("aria-pressed", vv === v ? "true" : "false");
-        b.setAttribute("aria-label", "Show every icon as " + LABEL[vv]);
-        var im = doc.createElement("img");
-        im.alt = ""; im.width = 80; im.height = 80; im.src = iconSrc(t, vv);
-        var cap = doc.createElement("span"); cap.textContent = LABEL[vv];
-        b.appendChild(im); b.appendChild(cap);
-        b.addEventListener("click", function () { galleryVariant = vv; showVariant(vv, true); });
-        spotVariants.appendChild(b);
-      });
-    };
-    var showVariant = function (v, wave) {
-      renderSpot(wave);
-      segBtns.forEach(function (x, k) {
-        var on = x.getAttribute("data-v") === v;
-        x.setAttribute("aria-pressed", on ? "true" : "false");
-        if (on) seg.style.setProperty("--seg", k);
-      });
-      galleryCells.forEach(function (c, i) {
-        var src = iconSrc(c.t, v);
-        if (c.img.getAttribute("src") === src) return;
-        if (reduced || !wave) { c.img.src = src; return; }
-        var next = new Image(); next.src = src;
-        var go = function () {
-          c.b.classList.add("flip");
-          setTimeout(function () { c.img.src = src; c.b.classList.remove("flip"); }, 170);
-        };
-        setTimeout(function () { (next.decode ? next.decode() : Promise.resolve()).then(go, go); }, i * 18);
-      });
-    };
-    segBtns.forEach(function (x) {
-      x.addEventListener("click", function () { galleryVariant = x.getAttribute("data-v"); showVariant(galleryVariant, true); });
-    });
-    var glowAll = function () {
-      var light = T.isLight();
-      galleryCells.forEach(function (c) { c.b.style.setProperty("--glow", T.derive(c.t, light).a1); });
-    };
-    showVariant(galleryShown(), false);
-    glowAll();
-    var lastLight = T.isLight();
-    // The spotlight always shows the current theme's icon.
-    T.onChange(function () { renderSpot(true); });
-    T.onChange(function () {
-      // Mode changes re-tint the glows and (unless the switch was used) the icons.
-      if (T.isLight() === lastLight) return;
-      lastLight = T.isLight();
-      if (galleryVariant == null) showVariant(galleryShown(), true);
-      glowAll();
-    });
-    measureGallery(); onScroll();
   }
 
   T.paintIcons();

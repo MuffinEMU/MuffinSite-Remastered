@@ -71,8 +71,7 @@ The artwork itself is never redrawn: the background and the character are
 split at the ground shadow, and lighting is added from each icon's own colours
 (key light, backlight bloom, vignette, material-coloured shading on the dome
 and liner, dome rim light, glass highlight and edge rim). The site uses the
-default or dark variant to match its mode, and the home page has a gallery of
-all 31 with a Default / Dark / Tinted switch.
+default or dark variant to match its mode.
 
 ```sh
 python3 tools/remaster_icons.py
