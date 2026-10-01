@@ -521,9 +521,11 @@
   /* ---------------------------------------------------- icon gallery */
   /* All 31 remastered icons. As the section scrolls in they assemble from a
      scattered cloud into the grid (CSS reads --p; see site.css). The
-     Default / Dark / Tinted switch flips each icon edge-on in a wave and
-     swaps it once the new image has decoded. Picking an icon applies its
-     theme. Until the switch is used, the gallery follows the site's mode. */
+     Original / Default / Dark / Tinted switch flips each icon edge-on in a
+     wave and swaps it once the new image has decoded. Picking an icon
+     applies its theme. The spotlight shows the current theme's icon large,
+     with a drag-to-compare wipe between the original and the chosen
+     version. Until the switch is used, the gallery follows the site's mode. */
   var gallery = $("[data-gallery]");
   var galleryGrid = gallery && $("[data-gallery-grid]", gallery);
   var galleryTop = 0, galleryP = -1, galleryVariant = null, galleryCells = [];
@@ -558,7 +560,46 @@
       return { t: t, b: b, img: img };
     });
     var seg = $("[data-gallery-mode]", gallery), segBtns = seg ? $$("button", seg) : [];
+    var LABEL = { "-original": "Original", "": "Default", "-dark": "Dark", "-tinted": "Tinted" };
+    var spot = $("[data-gspot]", gallery), cmp = spot && $("[data-cmp]", spot);
+    var cmpBefore = cmp && $("[data-cmp-before]", cmp), cmpAfter = cmp && $("[data-cmp-after]", cmp);
+    var cmpTag = cmp && $("[data-cmp-tag]", cmp), cmpRange = cmp && $("[data-cmp-range]", cmp);
+    var spotVariants = spot && $("[data-gspot-variants]", spot), spotShown = null;
+    if (cmpRange) {
+      var setWipe = function () { cmp.style.setProperty("--x", cmpRange.value + "%"); };
+      cmpRange.addEventListener("input", setWipe); setWipe();
+    }
+    // The spotlight: the original on the left of the wipe, the chosen version
+    // on the right (Default when "Original" itself is chosen).
+    var renderSpot = function (animate) {
+      if (!spot) return;
+      var t = T.THEMES[T.current()], v = galleryShown(), right = v === "-original" ? "" : v;
+      var key = t.id + "|" + v + "|" + T.isLight();
+      if (key === spotShown) return;
+      spotShown = key;
+      cmpBefore.src = iconSrc(t, "-original");
+      cmpAfter.src = iconSrc(t, right);
+      cmpTag.textContent = LABEL[right];
+      if (animate && !reduced) { cmp.classList.remove("swap"); void cmp.offsetWidth; cmp.classList.add("swap"); }
+      $("[data-gspot-name]", spot).textContent = t.name;
+      $("[data-gspot-pro]", spot).hidden = !t.pro;
+      spot.style.setProperty("--glow", T.derive(t, T.isLight()).a1);
+      spotVariants.textContent = "";
+      ["-original", "", "-dark", "-tinted"].forEach(function (vv) {
+        var b = doc.createElement("button");
+        b.type = "button";
+        b.setAttribute("aria-pressed", vv === v ? "true" : "false");
+        b.setAttribute("aria-label", "Show every icon as " + LABEL[vv]);
+        var im = doc.createElement("img");
+        im.alt = ""; im.width = 80; im.height = 80; im.src = iconSrc(t, vv);
+        var cap = doc.createElement("span"); cap.textContent = LABEL[vv];
+        b.appendChild(im); b.appendChild(cap);
+        b.addEventListener("click", function () { galleryVariant = vv; showVariant(vv, true); });
+        spotVariants.appendChild(b);
+      });
+    };
     var showVariant = function (v, wave) {
+      renderSpot(wave);
       segBtns.forEach(function (x, k) {
         var on = x.getAttribute("data-v") === v;
         x.setAttribute("aria-pressed", on ? "true" : "false");
@@ -586,6 +627,8 @@
     showVariant(galleryShown(), false);
     glowAll();
     var lastLight = T.isLight();
+    // The spotlight always shows the current theme's icon.
+    T.onChange(function () { renderSpot(true); });
     T.onChange(function () {
       // Mode changes re-tint the glows and (unless the switch was used) the icons.
       if (T.isLight() === lastLight) return;

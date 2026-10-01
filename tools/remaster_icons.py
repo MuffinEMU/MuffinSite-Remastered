@@ -17,6 +17,9 @@ variants are written per icon:
   <id>-tinted.svg  tinted appearance (iOS 18): the character in greyscale on
                    black, for the system to tint.
 
+The untouched originals are also written as <id>-original.svg (with any
+bitmap embedded) so the site can compare them with the remaster.
+
 On top of that, the default and dark variants get restrained lighting built
 only from the icon's own colours: a soft key light, a backlight behind the
 muffin in a lighter tone of the background's own hue (never white, which reads
@@ -402,6 +405,15 @@ def build(src_path, variant):
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     n = 0
+    # The untouched originals, for side-by-side comparison on the site. Only
+    # change: any bitmap is embedded so the file works as an <img>.
+    for src in sorted(SRC.glob("*.svg")):
+        tree = ET.parse(src)
+        for im in [e for e in walk(tree.getroot()) if e.tag == Q("image")]:
+            href = im.get("href") or im.get("{%s}href" % XLINK)
+            if href and not href.startswith("data:"):
+                im.set("href", embed(src.parent / href))
+        tree.write(OUT / f"{src.stem}-original.svg", encoding="unicode", xml_declaration=False)
     for src in sorted(SRC.glob("*.svg")):
         for variant, suffix in (("default", ""), ("dark", "-dark"), ("tinted", "-tinted")):
             tree = build(src, variant)

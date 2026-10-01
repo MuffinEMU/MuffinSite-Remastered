@@ -723,6 +723,46 @@ strong { font-weight: 600; color: var(--text); }
   transition: transform .55s var(--ease);
 }
 
+.seg-4 .seg-thumb { width: calc((100% - 8px) / 4); }
+/* The scattered icons start off to the sides; they must not widen the page. */
+.icon-gallery { overflow-x: clip; }
+
+/* Spotlight beside the grid: the selected icon, large, with a drag-to-
+   compare wipe between the original and the chosen version. */
+.gallery-layout { display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); gap: clamp(22px, 3vw, 44px); align-items: start; }
+.gspot {
+  position: sticky; top: 100px; overflow: hidden;
+  padding: 20px; border-radius: 28px; border: 1px solid var(--line); background: var(--surface);
+}
+.gspot::before {
+  content: ""; position: absolute; inset: -35% -35% auto; height: 85%; pointer-events: none;
+  background: radial-gradient(closest-side, var(--glow, var(--a2)), transparent); opacity: .3;
+}
+.cmp { position: relative; width: 100%; max-width: 100%; aspect-ratio: 1; border-radius: 22.4%; overflow: hidden; box-shadow: 0 30px 70px -30px rgba(0, 0, 0, .75); touch-action: pan-y; }
+.cmp img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.cmp-before { clip-path: inset(0 calc(100% - var(--x, 50%)) 0 0); }
+.cmp-handle { position: absolute; top: 0; bottom: 0; left: var(--x, 50%); width: 2px; margin-left: -1px; background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .25), 0 0 14px rgba(255, 255, 255, .6); pointer-events: none; }
+.cmp-handle::after { content: ""; position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: rgba(255, 255, 255, .94); box-shadow: 0 4px 14px rgba(0, 0, 0, .35); }
+.cmp-tag { position: absolute; top: 12px; padding: 5px 9px; border-radius: 999px; font: 500 .66rem/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: #fff; background: rgba(10, 8, 14, .55); pointer-events: none; }
+.cmp-tag.l { left: 12px; } .cmp-tag.r { right: 12px; }
+.cmp input[type="range"] { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; }
+.cmp:focus-within { outline: 2px solid var(--accent-text); outline-offset: 3px; }
+.cmp.same .cmp-before, .cmp.same .cmp-handle, .cmp.same .cmp-tag.l { display: none; }
+.cmp.swap img { animation: cmp-in .5s var(--ease); }
+@keyframes cmp-in { from { opacity: .35; transform: scale(.95); } }
+.gspot-meta { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 16px 0 0; }
+.gspot-meta h3 { margin: 0; font-size: 1.3rem; letter-spacing: -.02em; }
+.gspot-variants { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
+.gspot-variants button { display: grid; gap: 6px; justify-items: center; padding: 0; border: 0; background: none; cursor: pointer; color: var(--text-3); font: 500 .72rem/1 var(--font-body); }
+.gspot-variants img { width: 100%; aspect-ratio: 1; border-radius: 22.4%; box-shadow: 0 0 0 1px var(--line-2); transition: transform .35s var(--ease), box-shadow .35s; }
+.gspot-variants button:hover img { transform: translateY(-3px); }
+.gspot-variants button[aria-pressed="true"] { color: var(--text); }
+.gspot-variants button[aria-pressed="true"] img { box-shadow: 0 0 0 2px var(--surface-solid), 0 0 0 4px var(--accent-text); }
+@media (max-width: 900px) {
+  .gallery-layout { grid-template-columns: minmax(0, 1fr); }
+  .gspot { position: relative; top: 0; width: 100%; max-width: 420px; justify-self: center; }
+}
+
 /* Scroll assembly: --p (0..1) is set on the grid by app.js as the section
    scrolls in; each icon has a scatter offset (--dx, --dy, --rot) and a
    stagger (--s, its distance from the centre), so the cloud settles into the
@@ -762,7 +802,7 @@ strong { font-weight: 600; color: var(--text); }
 .gicon:focus-visible .gname { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
 @media (max-width: 600px) {
   .gallery-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .seg button { padding: .55rem .8rem; }
+  .seg button { padding: .55rem .7rem; font-size: .82rem; }
 }
 
 /* -------------------------------------------------------------- install */
