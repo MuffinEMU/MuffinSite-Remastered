@@ -222,6 +222,117 @@ def fix_links(body):
     return body.replace('href="../gamepad-layout/"', f'href="{LIVE}gamepad-layout/"')
 
 
+# ------------------------------------------------------------ iOS compat
+# Safari drops any declaration it can't parse, so the published stylesheet
+# gets a plain fallback declaration in front of each one that older iOS
+# versions don't understand. Newer Safari reads both and the later one wins.
+#   color-mix()            iOS 16.2   -> a theme token (or transparent inside
+#                                        a gradient / shadow)
+#   dvh / svh / lvh        iOS 15.4   -> vh
+#   overflow: clip         iOS 16     -> hidden
+#   inset                  iOS 14.1   -> top / right / bottom / left
+#   margin/padding-inline  iOS 14.1   -> left / right
+#   padding/margin-block   iOS 14.1   -> top / bottom
+# Custom properties are left alone (a fallback before them would never win).
+DECL = re.compile(r"(?<=[;{])(\s*)([a-zA-Z-]+)\s*:\s*([^;{}]*?)\s*;", re.S)
+
+
+def _replace_color_mix(prop, value):
+    out, i = [], 0
+    whole = value.strip().startswith("color-mix(") and value.strip().endswith(")")
+    while True:
+        j = value.find("color-mix(", i)
+        if j < 0:
+            out.append(value[i:])
+            break
+        out.append(value[i:j])
+        depth, k = 0, j + len("color-mix")
+        while k < len(value):
+            if value[k] == "(": depth += 1
+            elif value[k] == ")":
+                depth -= 1
+                if depth == 0: break
+            k += 1
+        inner = value[j:k + 1]
+        if whole and prop == "color":
+            rep = "var(--text)"
+        elif whole and prop.startswith("background"):
+            rep = "var(--surface-solid)" if ("var(--bg)" in inner or "surface-solid" in inner) else "var(--surface-2)"
+        elif whole and prop == "text-decoration-color":
+            rep = "currentColor"
+        elif prop.startswith("border") or prop.startswith("outline"):
+            rep = "var(--line-2)"
+        elif prop in ("box-shadow", "text-shadow", "filter"):
+            rep = "rgba(0, 0, 0, .25)"
+        else:
+            rep = "transparent"
+        out.append(rep)
+        i = k + 1
+    return "".join(out)
+
+
+def _split_top(v):
+    """Split a CSS value on whitespace that is not inside parentheses, so
+    max(var(--a), calc(1px + 2px)) stays one token."""
+    out, cur, depth = [], "", 0
+    for ch in v.strip():
+        if ch == "(": depth += 1
+        elif ch == ")": depth -= 1
+        if ch.isspace() and depth == 0:
+            if cur: out.append(cur); cur = ""
+        else:
+            cur += ch
+    if cur: out.append(cur)
+    return out
+
+
+def _sides(v):
+    p = _split_top(v)
+    p = p + [p[0]] * (1 - len(p)) if len(p) == 1 else p
+    if len(p) == 1: p = p * 4
+    elif len(p) == 2: p = [p[0], p[1], p[0], p[1]]
+    elif len(p) == 3: p = [p[0], p[1], p[2], p[1]]
+    return p[:4]
+
+
+def compat_css(css):
+    def fix(m):
+        lead, prop, value = m.group(1), m.group(2), m.group(3)
+        low = prop.lower()
+        extra = []
+        fb = value
+        if "color-mix(" in fb:
+            fb = _replace_color_mix(low, fb)
+        if re.search(r"\d(dvh|svh|lvh)\b", fb):
+            fb = re.sub(r"(\d)(dvh|svh|lvh)\b", r"\1vh", fb)
+        if low in ("overflow", "overflow-x", "overflow-y") and fb.strip() == "clip":
+            fb = "hidden"
+        if fb != value:
+            extra.append(f"{prop}: {fb};")
+        if low == "inset" and "env(" not in value:
+            t, r, b, l = _sides(value)
+            extra.append(f"top: {t}; right: {r}; bottom: {b}; left: {l};")
+        if low in ("margin-inline", "padding-inline"):
+            a = _split_top(value); a = a if len(a) == 2 else a * 2
+            base = low.split("-")[0]
+            extra.append(f"{base}-left: {a[0]}; {base}-right: {a[1]};")
+        if low in ("margin-block", "padding-block"):
+            a = _split_top(value); a = a if len(a) == 2 else a * 2
+            base = low.split("-")[0]
+            extra.append(f"{base}-top: {a[0]}; {base}-bottom: {a[1]};")
+        if not extra:
+            return m.group(0)
+        return lead + " ".join(extra) + " " + m.group(0)[len(lead):]
+    out = DECL.sub(fix, css)
+    for a, b in (("{", "}"), ("(", ")")):
+        if out.count(a) != out.count(b) or css.count(a) - css.count(b) != out.count(a) - out.count(b):
+            raise SystemExit(f"compat_css unbalanced {a}{b}: refusing to publish a broken stylesheet")
+    for decl in re.findall(r"[^;{}]+;", out):
+        if decl.count("(") != decl.count(")"):
+            raise SystemExit("compat_css produced an unbalanced declaration: " + decl.strip()[:80])
+    return out
+
+
 def build_home():
     body = (CONTENT / "home.html").read_text()
     page = (
@@ -280,6 +391,8 @@ def main():
         shutil.rmtree(OUT)
     OUT.mkdir()
     shutil.copytree(ROOT / "assets", OUT / "assets")
+    css = OUT / "assets" / "site.css"
+    css.write_text(compat_css(css.read_text()))
     (OUT / ".nojekyll").write_text("")
     for f in (ROOT / "static").iterdir():
         shutil.copy2(f, OUT / f.name)

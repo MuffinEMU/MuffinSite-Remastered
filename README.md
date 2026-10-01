@@ -55,6 +55,21 @@ rainbow header stops) feeds the glows; the button gradient (`muffinTopLight` →
 mode. The theme lab shows each theme as a small piece of the app (background, card,
 button) with its matching app icon, and the hero icon changes with it.
 
+## Older iPhones and iPads
+
+The site is built for current Safari and checked to work back to iOS 15 (the
+app's own minimum), with content still readable and usable on iOS 12-14.
+
+- `build.py` adds a plain fallback declaration in front of every declaration
+  older Safari can't read (`color-mix()`, `dvh`/`svh`, `overflow: clip`,
+  `inset`, logical properties), and refuses to publish if the result doesn't
+  balance.
+- `site.css` ends with the rest: `<dialog>` hidden where unsupported (the
+  search buttons hide themselves), and `aspect-ratio` fallbacks for iOS 14.
+- The scripts are plain ES5 with every newer API feature-tested. Reveal-on-
+  scroll only hides content once `app.js` is running, so a device that can't
+  run it still sees everything.
+
 ## App icons, remastered
 
 `icons/source/` holds the 31 original icon SVGs (identical to the icons the app

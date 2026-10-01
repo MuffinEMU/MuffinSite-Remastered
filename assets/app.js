@@ -12,6 +12,9 @@
   var doc = document, root = doc.documentElement, body = doc.body;
   var T = window.MuffinThemes;
   if (!T) return;
+  // Reveal-on-scroll only hides content once this script is actually running,
+  // so a browser that can't run it (or a failed load) still shows everything.
+  document.documentElement.classList.add("reveal-ready");
   var base = body.getAttribute("data-base") || "";
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
@@ -174,7 +177,9 @@
       if (!c || !railDistance) return;
       var need = c.offsetLeft + c.offsetWidth - doc.documentElement.clientWidth + 48;
       var p = Math.min(1, Math.max(0, need / railDistance));
-      window.scrollTo({ top: railTop + p * railDistance, behavior: reduced ? "auto" : "smooth" });
+      var y = railTop + p * railDistance;
+      if ("scrollBehavior" in root.style) window.scrollTo({ top: y, behavior: reduced ? "auto" : "smooth" });
+      else window.scrollTo(0, y);
     });
   }
 
@@ -534,7 +539,8 @@
   $$("main h2:not(.visually-hidden)").forEach(function (h) {
     if (!h.id && !(h.parentNode.tagName === "SECTION" && h.parentNode.id)) h.id = slug(h.textContent);
   });
-  $$(".docs-content :is(h2, h3)[id], .docs-content section[id] > h2").forEach(function (h) {
+  // Plain selectors (no :is()) so iOS 12-13 Safari can run this.
+  $$(".docs-content h2[id], .docs-content h3[id], .docs-content section[id] > h2").forEach(function (h) {
     var a = doc.createElement("a");
     a.className = "anchor"; a.href = "#" + (h.id || h.parentNode.id); a.textContent = "#";
     a.setAttribute("aria-hidden", "true"); a.tabIndex = -1;
