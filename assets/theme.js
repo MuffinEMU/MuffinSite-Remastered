@@ -230,10 +230,6 @@
     return out;
   }
 
-  function spectrumOf(t) {
-    if (t.stops) return "linear-gradient(100deg, " + bandsOf(t, true).join(", ") + ")";
-    return "linear-gradient(100deg, " + [t.top[0], t.blush[0], t.pixel[0], t.bottom[0]].join(", ") + ")";
-  }
 
   /* The app's own background, exactly as MuffinTheme.backgroundGradient draws it:
      multi-stop themes top-to-bottom at their stop locations, the rest a
@@ -247,67 +243,181 @@
     return "linear-gradient(135deg, " + t.top[k] + ", " + t.bottom[k] + ")";
   }
 
+  /* ---------------------------------------------------------------
+     Colour maths. Themes keep the app's hues; only lightness (and, for
+     colours that have a hue, a minimum chroma) is adjusted, in OKLCH, until a
+     colour measurably works on the site's own backgrounds in the current
+     mode. Nothing is left to luck: every text colour is checked against the
+     page and card backgrounds it can sit on.
+     --------------------------------------------------------------- */
+  function hexToRgb(h) { return [1, 3, 5].map(function (i) { return parseInt(h.substr(i, 2), 16) / 255; }); }
+  function toLin(v) { return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }
+  function fromLin(v) { return v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055; }
+  function hex2(v) { var n = Math.round(Math.min(1, Math.max(0, v)) * 255); return (n < 16 ? "0" : "") + n.toString(16); }
+
+  function toOklch(hex) {
+    var c = hexToRgb(hex).map(toLin);
+    var l = Math.cbrt(0.4122214708 * c[0] + 0.5363325363 * c[1] + 0.0514459929 * c[2]);
+    var m = Math.cbrt(0.2119034982 * c[0] + 0.6806995451 * c[1] + 0.1073969566 * c[2]);
+    var s = Math.cbrt(0.0883024619 * c[0] + 0.2817188376 * c[1] + 0.6299787005 * c[2]);
+    var L = 0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s;
+    var A = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s;
+    var B = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s;
+    return [L, Math.sqrt(A * A + B * B), Math.atan2(B, A)];
+  }
+  function oklchToLinRgb(L, C, H) {
+    var A = C * Math.cos(H), B = C * Math.sin(H);
+    var l = Math.pow(L + 0.3963377774 * A + 0.2158037573 * B, 3);
+    var m = Math.pow(L - 0.1055613458 * A - 0.0638541728 * B, 3);
+    var s = Math.pow(L - 0.0894841775 * A - 1.2914855480 * B, 3);
+    return [
+      4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+      -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+      -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s
+    ];
+  }
+  // Back to sRGB, reducing chroma (never lightness or hue) until it fits the gamut.
+  function fromOklch(L, C, H) {
+    var lo = 0, hi = C, rgb = oklchToLinRgb(L, C, H);
+    function inGamut(v) { return v.every(function (x) { return x >= -0.0005 && x <= 1.0005; }); }
+    if (!inGamut(rgb)) {
+      for (var i = 0; i < 24; i++) {
+        var mid = (lo + hi) / 2, t = oklchToLinRgb(L, mid, H);
+        if (inGamut(t)) { lo = mid; rgb = t; } else hi = mid;
+      }
+      rgb = oklchToLinRgb(L, lo, H);
+    }
+    return "#" + rgb.map(function (v) { return hex2(fromLin(Math.min(1, Math.max(0, v)))); }).join("");
+  }
+
   function luminance(hex) {
-    var c = [1, 3, 5].map(function (i) {
-      var v = parseInt(hex.substr(i, 2), 16) / 255;
-      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
-    });
+    var c = hexToRgb(hex).map(toLin);
     return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
   }
   function contrast(a, b) {
     var x = luminance(a), y = luminance(b);
     return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
   }
-  /* Button text. The app puts sparkleCream on its button gradient, but on most
-     themes that reads below 4.5:1, so the site keeps sparkleCream only where it
-     passes against both ends of the gradient, then tries the app's own text
-     colour (brownDarkest), then white or near-black, else the best of them. */
-  function mix(a, b) {
-    var out = "#";
-    for (var i = 1; i < 7; i += 2) {
-      var v = Math.round((parseInt(a.substr(i, 2), 16) + parseInt(b.substr(i, 2), 16)) / 2);
-      out += (v < 16 ? "0" : "") + v.toString(16);
+  function mixHex(a, b, t) {
+    var x = hexToRgb(a), y = hexToRgb(b);
+    return "#" + x.map(function (v, i) { return hex2(v + (y[i] - v) * t); }).join("");
+  }
+
+  // The backgrounds the site draws (site.css): page, and the lightest/darkest
+  // card surface over it.
+  var GROUNDS = { dark: ["#05060B", "#13141B"], light: ["#F4F5FA", "#FFFFFF"] };
+
+  /* Clamp a colour's lightness into [lo, hi] and give it at least `minC`
+     chroma if it has a hue at all (greys stay grey). For glows and dots. */
+  function fit(hex, lo, hi, minC) {
+    var o = toOklch(hex), C = o[1] >= 0.02 ? Math.max(o[1], minC) : o[1];
+    return fromOklch(Math.min(hi, Math.max(lo, o[0])), C, o[2]);
+  }
+
+  /* The nearest colour with the same hue that reaches `target` contrast on
+     every ground (lighter on dark grounds, darker on light ones). */
+  function readable(hex, grounds, target, minC) {
+    var o = toOklch(hex), dark = luminance(grounds[0]) < 0.2;
+    var C = o[1] >= 0.02 ? Math.max(o[1], minC || 0) : o[1], L = o[0];
+    function ok(h) { return grounds.every(function (g) { return contrast(h, g) >= target; }); }
+    var out = fromOklch(L, C, o[2]);
+    for (var i = 0; i < 100 && !ok(out); i++) {
+      L = dark ? Math.min(1, L + 0.01) : Math.max(0, L - 0.01);
+      out = fromOklch(L, C, o[2]);
     }
     return out;
   }
+
+  /* Button label. The app puts sparkleCream on its button gradient, but on
+     most themes that reads below 4.5:1. The label must reach 4.5:1 across
+     the middle 60% of the gradient (where it sits) and 3:1 at both ends;
+     sparkleCream is kept wherever it does, then the app's own text colour
+     (brownDarkest), then white or near-black, else whichever reads best. */
   function buttonText(t, k) {
-    // The label sits in the middle of the button: it must reach 4.5:1 against
-    // the gradient's midpoint and 3:1 against both ends.
-    var a = t.muffinTop[k], b = t.muffinDark[k], mid = mix(a, b);
+    var a = t.muffinTop[k], b = t.muffinDark[k];
+    var samples = [0.2, 0.35, 0.5, 0.65, 0.8].map(function (x) { return mixHex(a, b, x); });
+    function inner(c) { return Math.min.apply(null, samples.map(function (s) { return contrast(c, s); })); }
     function ends(c) { return Math.min(contrast(c, a), contrast(c, b)); }
-    function ok(c) { return contrast(c, mid) >= 4.5 && ends(c) >= 3; }
-    function score(c) { return Math.min(contrast(c, mid), ends(c) * 1.5); }
+    function ok(c) { return inner(c) >= 4.5 && ends(c) >= 3; }
+    function score(c) { return Math.min(inner(c), ends(c) * 1.5); }
     var picks = [t.sparkle[k], t.brownDarkest[0], "#FFFFFF", "#0B0B12"];
     for (var i = 0; i < picks.length; i++) if (ok(picks[i])) return picks[i];
     return picks.reduce(function (x, y) { return score(y) > score(x) ? y : x; });
   }
 
+  /* The app's button gradient with a label that reads. When no label colour
+     can reach 4.5:1 across the gradient (a light-to-dark gradient can defeat
+     every choice), the gradient ends are moved away from the label in
+     lightness only, a step at a time, until it does. Hue is untouched. */
+  function buttonColours(t, k) {
+    var a = t.muffinTop[k], b = t.muffinDark[k], label = buttonText(t, k);
+    var darkLabel = luminance(label) < 0.18;
+    function inner(x, y) {
+      return Math.min.apply(null, [0.2, 0.35, 0.5, 0.65, 0.8].map(function (f) { return contrast(label, mixHex(x, y, f)); }));
+    }
+    function good(x, y) { return inner(x, y) >= 4.5 && Math.min(contrast(label, x), contrast(label, y)) >= 3; }
+    function step(hex) {
+      var o = toOklch(hex);
+      return fromOklch(Math.min(1, Math.max(0, o[0] + (darkLabel ? 0.01 : -0.01))), o[1], o[2]);
+    }
+    for (var i = 0; i < 60 && !good(a, b); i++) {
+      if (contrast(label, a) <= contrast(label, b)) a = step(a); else b = step(b);
+    }
+    return { b1: a, b2: b, onB: label };
+  }
+
+  /* Everything the site derives from a theme, for one mode. Sources follow
+     the role each token plays in the app (MuffinTheme.swift):
+       glows a1..a4   backgroundTop, pixelBlue, blushPink, backgroundBottom
+                      (Autism Muffin: its first/last rainbow bands for a1/a4)
+       s1..s5         gradient text and bars: backgroundTop, blushPink,
+                      pixelBlue, blueberryNavy, backgroundBottom (Autism
+                      Muffin: five of its rainbow bands)
+       accent         pixelBlue, the app's interactive tint (links, focus)
+       accent2        backgroundTop (eyebrows), or pixelBlue for a grey top
+       b1, b2, on-b   the app's button gradient and its label (buttonText)
+     Glows are clamped into a visible lightness band; text colours are
+     pushed until they read (4.5:1 body text, 3:1 large gradient text). */
+  function derive(t, light) {
+    var k = light ? 0 : 1, g = light ? GROUNDS.light : GROUNDS.dark;
+    var glo = light ? [0.45, 0.78] : [0.62, 0.85];
+    var bands = t.stops ? bandsOf(t, true) : null;
+    var src = {
+      a1: bands ? bands[0] : t.top[0], a2: t.pixel[k], a3: t.blush[k],
+      a4: bands ? bands[bands.length - 1] : t.bottom[0]
+    };
+    var specSrc = bands ? [bands[0], bands[1], bands[3], bands[4], bands[6]]
+                        : [t.top[0], t.blush[0], t.pixel[k], t.navy[k], t.bottom[0]];
+    var top = bands ? bands[0] : t.top[k];
+    var out = buttonColours(t, k);
+    ["a1", "a2", "a3", "a4"].forEach(function (n) { out[n] = fit(src[n], glo[0], glo[1], 0.12); });
+    out.s = specSrc.map(function (c) { return readable(c, g, 3.2, 0.1); });
+    // Small marks (dots, bars, ring beads) are non-text: 3:1 against the page.
+    out.dots = [src.a1, src.a2, src.a3].map(function (c) { return readable(fit(c, 0, 1, 0.12), g, 3); });
+    out.accent = readable(t.pixel[k], g, 4.6);
+    out.accent2 = readable(toOklch(top)[1] >= 0.03 ? top : t.pixel[k], g, 4.6, 0.06);
+    return out;
+  }
+
+  function spectrumOf(t) {
+    var d = derive(t, isLight());
+    return "linear-gradient(100deg, " + d.s.join(", ") + ")";
+  }
+
   var current = 0;
 
-  /* How the app's tokens map onto the site, by the role each plays in the app:
-       --a1 / --a4  glows      backgroundTop / backgroundBottom (the saturated
-                               light values; on Autism Muffin, the first and last
-                               rainbow bands, since its bottom is the page cream)
-       --a2         accent     pixelBlue, for the current mode
-       --a3         accent     blushPink, for the current mode
-       --b1 / --b2  buttons    muffinTopLight / muffinTopDark (muffinTopGradient)
-       --on-b       button text  sparkleCream where it reads at 4.5:1 (buttonText)
-     Light/dark values follow the site's mode, as the app's do. */
   function apply(i) {
-    var t = THEMES[i], k = isLight() ? 0 : 1;
+    var t = THEMES[i], light = isLight(), d = derive(t, light);
     current = i;
-    var bands = t.stops ? bandsOf(t, true) : null;
-    root.style.setProperty("--a1", bands ? bands[0] : t.top[0]);
-    root.style.setProperty("--a4", bands ? bands[bands.length - 1] : t.bottom[0]);
-    root.style.setProperty("--a2", t.pixel[k]);
-    root.style.setProperty("--a3", t.blush[k]);
-    root.style.setProperty("--b1", t.muffinTop[k]);
-    root.style.setProperty("--b2", t.muffinDark[k]);
-    root.style.setProperty("--on-b", buttonText(t, k));
-    root.style.setProperty("--spectrum", spectrumOf(t));
+    var set = function (n, v) { root.style.setProperty(n, v); };
+    set("--a1", d.a1); set("--a2", d.a2); set("--a3", d.a3); set("--a4", d.a4);
+    d.s.forEach(function (c, j) { set("--s" + (j + 1), c); });
+    d.dots.forEach(function (c, j) { set("--dot" + (j + 1), c); });
+    set("--accent-text", d.accent); set("--accent-text-2", d.accent2);
+    set("--b1", d.b1); set("--b2", d.b2); set("--on-b", d.onB);
     root.setAttribute("data-theme", t.id);
     var meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", t.top[k]);
+    if (meta) meta.setAttribute("content", light ? GROUNDS.light[0] : GROUNDS.dark[0]);
     listeners.forEach(function (fn) { fn(t, i); });
   }
 
@@ -396,6 +506,8 @@
     iconUrl: iconUrl,
     paintIcons: paintIcons,
     buttonText: buttonText,
+    derive: derive,
+    contrast: contrast,
     setMode: setMode,
     getMode: getMode,
     isLight: isLight,

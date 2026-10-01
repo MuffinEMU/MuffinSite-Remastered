@@ -25,7 +25,8 @@
   <div class="scroll-cue" aria-hidden="true">Scroll<span></span></div>
 </section>
 
-<div class="marquee" aria-label="Highlights" data-anim>
+<div class="marquee" role="group" aria-label="Highlights" data-anim>
+  <button class="marquee-toggle" type="button" aria-pressed="false" data-marquee-toggle><span class="visually-hidden">Pause the moving highlights</span><svg viewBox="0 0 24 24" aria-hidden="true"><path class="pause" d="M8 5v14M16 5v14"/><path class="play" d="M8 5l11 7-11 7z"/></svg></button>
   <div class="marquee-track">
     <span>Built on Cemu</span><span>Metal-native renderer</span><span>Vulkan via MoltenVK</span><span>4 save-state slots per game</span><span>20 controller skins</span><span>31 app icons &amp; themes</span><span>Graphic packs</span><span>DLC &amp; update import</span><span>iOS 15 or later</span><span>MPL-2.0</span>
     <span aria-hidden="true">Built on Cemu</span><span aria-hidden="true">Metal-native renderer</span><span aria-hidden="true">Vulkan via MoltenVK</span><span aria-hidden="true">4 save-state slots per game</span><span aria-hidden="true">20 controller skins</span><span aria-hidden="true">31 app icons &amp; themes</span><span aria-hidden="true">Graphic packs</span><span aria-hidden="true">DLC &amp; update import</span><span aria-hidden="true">iOS 15 or later</span><span aria-hidden="true">MPL-2.0</span>
@@ -90,7 +91,7 @@
   </div>
 </section>
 
-<section class="rail" data-rail aria-labelledby="inside-h">
+<section class="rail" id="inside" data-rail aria-labelledby="inside-h">
   <div class="rail-sticky">
     <div class="wrap rail-head">
       <div class="section-head" data-reveal>
@@ -222,7 +223,7 @@
 <section class="section" id="credits" style="padding-top:0">
   <div class="wrap">
     <div class="card credits" data-reveal>
-      <span class="eyebrow">Credits &amp; license</span>
+      <h2 class="eyebrow">Credits &amp; license</h2>
       <p>Bring your own games and keys. No copyrighted content is distributed here — not games, not system files, not keys.</p>
       <p>MuffinEMU is built on <a href="https://github.com/cemu-project/Cemu">Cemu</a>. The optional melo-controls pad is <a href="https://github.com/stossy11/Melo-Controller">Melo-Controller</a> by stossy11 (GPL-3.0). The Vulkan path uses <a href="https://github.com/KhronosGroup/MoltenVK">MoltenVK</a>.</p>
       <p>MuffinEMU's own source is <a href="https://github.com/kiddreads/MuffinEMU/blob/main/LICENSE.txt">MPL-2.0</a>, like Cemu. Because Melo-Controller (GPL-3.0) is linked into every build, a MuffinEMU IPA as a whole is distributed under GPL-3.0, with the repository above as its source.</p>

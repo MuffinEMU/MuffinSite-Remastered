@@ -75,19 +75,35 @@ def head(seo, prefix):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 {seo.strip()}
-<link rel="icon" href="{prefix}assets/icon.png">
-<link rel="apple-touch-icon" href="{prefix}assets/icon.png">
-<meta name="theme-color" content="#F4A551">
+<link rel="icon" href="{prefix}assets/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="{prefix}assets/icon-180.png">
+<meta name="theme-color" content="#05060B" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F4F5FA" media="(prefers-color-scheme: light)">
 <link rel="preload" href="{prefix}assets/fonts/space-grotesk.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="{prefix}assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="{prefix}assets/fonts/jetbrains-mono.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{prefix}assets/site.css">
 <script src="{prefix}assets/theme.js"></script>
 <script type="speculationrules">
-{{"prerender": [{{"where": {{"and": [{{"href_matches": "/*"}}, {{"not": {{"selector_matches": "[target], [download]"}}}}]}}, "eagerness": "moderate"}}],
- "prefetch": [{{"where": {{"href_matches": "/*"}}, "eagerness": "conservative"}}]}}
+{{"prerender": [{{"where": {{"and": [{{"href_matches": "{SITE_BASE}*"}}, {{"not": {{"selector_matches": "[target], [download]"}}}}]}}, "eagerness": "moderate"}}]}}
 </script>
 </head>"""
 
+
+# Loaded only once the page is actually shown: a page prerendered on hover
+# and never opened is not a visit.
+GOATCOUNTER = """<script>
+(function () {
+  function load() {
+    var s = document.createElement("script");
+    s.async = true; s.src = "//gc.zgo.at/count.js";
+    s.setAttribute("data-goatcounter", "https://muffinemu.goatcounter.com/count");
+    document.body.appendChild(s);
+  }
+  if (document.prerendering) document.addEventListener("prerenderingchange", load, { once: true });
+  else load();
+})();
+</script>"""
 
 FINEPRINT = (
     'This is a preview of the redesigned site. The official MuffinEMU site is '
@@ -106,13 +122,13 @@ def seo(name):
     return block
 
 
-def header(prefix, current):
+def header(prefix, current, slug=None):
     def cur(name):
         return ' aria-current="page"' if current == name else ""
 
     docs_links = "\n".join(
-        f'          <a href="{prefix}docs/{slug}.html">{"All documentation" if slug == "index" else label}</a>'
-        for slug, label in DOCS_NAV
+        f'          <a href="{prefix}docs/{s}.html"{" aria-current=\"page\"" if s == slug else ""}>{"All documentation" if s == "index" else label}</a>'
+        for s, label in DOCS_NAV
     )
     return f"""
 <a class="skip-link" href="#main">Skip to content</a>
@@ -120,7 +136,7 @@ def header(prefix, current):
 
 <header class="site-header">
   <div class="header-inner">
-    <a class="brand" href="{prefix}index.html"><img src="{prefix}assets/icon.png" alt="" width="30" height="30"><span>MuffinEMU</span></a>
+    <a class="brand" href="{prefix}index.html"><img src="{prefix}assets/icon-64.png" alt="" width="30" height="30"><span>MuffinEMU</span></a>
     <nav class="site-nav" id="site-nav" aria-label="Main">
       <a href="{prefix}index.html"{cur("home")}>Home</a>
       <a href="{prefix}docs/installation.html"{cur("installation")}>Install</a>
@@ -131,10 +147,11 @@ def header(prefix, current):
         </div>
       </details>
       <a href="https://github.com/kiddreads/MuffinEMU">GitHub</a>
+      <button class="nav-theme" type="button" data-palette-open="theme "><span class="theme-dot" aria-hidden="true"></span>Theme: <span data-theme-name>Bakery (Original)</span></button>
     </nav>
     <div class="header-tools">
-      <button class="icon-btn search-btn" type="button" data-palette-open aria-label="Search and commands"><svg aria-hidden="true"><use href="#i-search"/></svg><span class="label">Search</span><span class="kbd">⌘K</span></button>
-      <button class="icon-btn theme-btn" type="button" data-palette-open="theme " aria-label="Choose a theme"><span class="theme-dot" aria-hidden="true"></span><span class="label" data-theme-name>Bakery (Original)</span></button>
+      <button class="icon-btn search-btn" type="button" data-palette-open aria-label="Search and commands"><svg aria-hidden="true"><use href="#i-search"/></svg><span class="label">Search</span><span class="kbd" data-shortcut>⌘K</span></button>
+      <button class="icon-btn theme-btn" type="button" data-palette-open="theme "><span class="theme-dot" aria-hidden="true"></span><span class="label" data-theme-name>Bakery (Original)</span></button>
       <button class="icon-btn mode-btn" type="button" data-mode-cycle aria-label="Colour mode"><svg class="auto" aria-hidden="true"><use href="#i-auto"/></svg><svg class="moon" aria-hidden="true"><use href="#i-moon"/></svg><svg class="sun" aria-hidden="true"><use href="#i-sun"/></svg></button>
       <button class="icon-btn nav-toggle" type="button" data-nav-toggle aria-controls="site-nav" aria-expanded="false" aria-label="Menu"><svg aria-hidden="true"><use href="#i-menu"/></svg></button>
     </div>
@@ -150,7 +167,7 @@ def footer(prefix):
   <div class="wrap">
     <div class="footer-grid">
       <div>
-        <a class="brand" href="{prefix}index.html" style="margin-bottom:12px"><img src="{prefix}assets/icon.png" alt="" width="30" height="30"><span>MuffinEMU</span></a>
+        <a class="brand" href="{prefix}index.html" style="margin-bottom:12px"><img src="{prefix}assets/icon-64.png" alt="" width="30" height="30"><span>MuffinEMU</span></a>
         <p style="margin:0">Wii U emulation for iPhone and iPad.</p>
       </div>
       <nav aria-label="Footer">
@@ -170,18 +187,35 @@ def footer(prefix):
 <dialog class="palette" data-palette aria-label="Search and commands">
   <div class="palette-input">
     <svg aria-hidden="true"><use href="#i-search"/></svg>
-    <input type="text" placeholder="Search pages, sections, themes…" aria-label="Search" role="combobox" aria-expanded="true" aria-controls="palette-list" autocomplete="off" spellcheck="false">
+    <input type="text" placeholder="Search pages, sections, themes…" aria-label="Search" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="palette-list" autocomplete="off" spellcheck="false">
     <span class="kbd">esc</span>
   </div>
+  <p class="palette-count visually-hidden" role="status" aria-live="polite"></p>
   <ul class="palette-list" id="palette-list" role="listbox"></ul>
   <div class="palette-foot"><span>↑↓ move</span><span>↵ open</span><span>“theme …” filters themes</span></div>
 </dialog>
 
 <script src="{prefix}assets/app.js"></script>
-{"" if PREVIEW else '<script data-goatcounter="https://muffinemu.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>'}
+{"" if PREVIEW else GOATCOUNTER}
 </body>
 </html>
 """
+
+
+def wrap_tables(body):
+    """Give tables that aren't already in a .table-wrap one, so wide tables
+    scroll inside the page and can be reached by keyboard."""
+    out, pos = [], 0
+    for m in re.finditer(r"<table\b.*?</table>", body, re.S):
+        before = body[max(0, m.start() - 200):m.start()]
+        out.append(body[pos:m.start()])
+        if 'class="table-wrap"' in before.rsplit("</div>", 1)[-1]:
+            out.append(m.group(0))
+        else:
+            out.append('<div class="table-wrap" tabindex="0" role="region" aria-label="Table">' + m.group(0) + "</div>")
+        pos = m.end()
+    out.append(body[pos:])
+    return "".join(out)
 
 
 def fix_links(body):
@@ -193,7 +227,7 @@ def build_home():
     page = (
         head(seo("index"), "")
         + '\n<body data-base="">\n' + sprite() + header("", "home")
-        + '\n<main id="main">\n' + body + "</main>\n" + footer("")
+        + '\n<main id="main" tabindex="-1">\n' + body + "</main>\n" + footer("")
     )
     (OUT / "index.html").write_text(page)
 
@@ -204,9 +238,10 @@ def build_docs():
         slug = path.stem
         body = fix_links(path.read_text())
         current = "installation" if slug == "installation" else "docs"
-        shell = head(seo(f"docs-{slug}"), "../") + '\n<body data-base="../">\n' + sprite() + header("../", current)
+        body = wrap_tables(body)
+        shell = head(seo(f"docs-{slug}"), "../") + '\n<body data-base="../">\n' + sprite() + header("../", current, slug)
         if slug == "index":
-            main = f'\n<main class="wrap docs-hub" id="main">\n{body}</main>\n'
+            main = f'\n<main class="wrap docs-hub" id="main" tabindex="-1">\n{body}</main>\n'
         else:
             side = "\n".join(
                 f'      <a href="{s}.html"{" aria-current=\"page\"" if s == slug else ""}>{label}</a>'
@@ -220,7 +255,7 @@ def build_docs():
 {side}
     </nav>
   </aside>
-  <main class="docs-content" id="main">
+  <main class="docs-content" id="main" tabindex="-1">
 {body}  </main>
 </div>
 """
@@ -230,11 +265,12 @@ def build_docs():
 def build_404():
     # GitHub Pages serves this at whatever missing URL was asked for, so every
     # path in it is absolute.
-    p = SITE_BASE
-    body = (CONTENT / "404.html").read_text().replace("/MuffinEMU/icon.png", p + "assets/icon.png")
+    p = SITE_BASE.rstrip("/") + "/"
+    body = (CONTENT / "404.html").read_text().replace('"/MuffinEMU/icon.png"', f'"{p}assets/icon-180.png"')
+    body = body.replace('"/MuffinEMU/', f'"{p}')
     page = (
         head(seo("404"), p) + f'\n<body data-base="{p}">\n' + sprite() + header(p, "")
-        + '\n<main id="main" class="wrap notfound">\n' + body + "</main>\n" + footer(p)
+        + '\n<main id="main" class="wrap notfound" tabindex="-1">\n' + body + "</main>\n" + footer(p)
     )
     (OUT / "404.html").write_text(page)
 

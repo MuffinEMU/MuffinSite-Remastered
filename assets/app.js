@@ -11,6 +11,7 @@
 
   var doc = document, root = doc.documentElement, body = doc.body;
   var T = window.MuffinThemes;
+  if (!T) return;
   var base = body.getAttribute("data-base") || "";
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
@@ -19,18 +20,16 @@
   function $$(s, c) { return Array.prototype.slice.call((c || doc).querySelectorAll(s)); }
 
   /* ---------------------------------------------------------- toast */
-  var toastEl, toastTimer;
+  // Created up front: a live region only announces changes made after it exists.
+  var toastEl = doc.createElement("div"), toastTimer;
+  toastEl.className = "toast";
+  toastEl.setAttribute("role", "status");
+  body.appendChild(toastEl);
   function toast(msg) {
-    if (!toastEl) {
-      toastEl = doc.createElement("div");
-      toastEl.className = "toast";
-      toastEl.setAttribute("role", "status");
-      body.appendChild(toastEl);
-    }
     toastEl.textContent = msg;
     toastEl.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { toastEl.classList.remove("show"); }, 2200);
+    toastTimer = setTimeout(function () { toastEl.classList.remove("show"); }, 3200);
   }
 
   /* ------------------------------------------- theme + mode switching */
@@ -62,32 +61,58 @@
 
   var modeBtn = $("[data-mode-cycle]");
   if (modeBtn) {
-    var order = ["auto", "dark", "light"];
-    function labelMode() { modeBtn.setAttribute("aria-label", "Colour mode: " + T.getMode() + ". Change"); }
+    var order = ["auto", "dark", "light"], wanted = T.getMode();
+    var nextOf = function (m) { return order[(order.indexOf(m) + 1) % order.length]; };
+    var labelMode = function () {
+      var m = T.getMode();
+      modeBtn.setAttribute("aria-label", "Colour mode: " + m + ". Switch to " + nextOf(m));
+    };
     labelMode();
     modeBtn.addEventListener("click", function (e) {
-      var next = order[(order.indexOf(T.getMode()) + 1) % order.length];
-      withReveal(e, function () { T.setMode(next, true); });
-      labelMode();
-      toast("Mode: " + next);
+      var next = wanted = nextOf(wanted);
+      withReveal(e, function () { T.setMode(next, true); labelMode(); });
+      toast("Colour mode: " + next);
     });
   }
 
   /* ---------------------------------------------------- mobile nav */
   var navToggle = $("[data-nav-toggle]");
+  function closeDropdowns(except) {
+    $$(".nav-dropdown[open]").forEach(function (d) { if (d !== except) d.removeAttribute("open"); });
+  }
+  function closeNav(refocus) {
+    if (!body.classList.contains("nav-open")) return;
+    body.classList.remove("nav-open");
+    if (navToggle) { navToggle.setAttribute("aria-expanded", "false"); if (refocus) navToggle.focus(); }
+  }
   if (navToggle) {
     navToggle.addEventListener("click", function () {
       var open = body.classList.toggle("nav-open");
       navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      if (open) { var first = $(".site-nav a, .site-nav summary"); if (first) first.focus(); }
+      else closeDropdowns();
     });
   }
   doc.addEventListener("click", function (e) {
-    $$(".nav-dropdown[open]").forEach(function (d) { if (!d.contains(e.target)) d.removeAttribute("open"); });
-    if (body.classList.contains("nav-open") && !e.target.closest(".site-header")) {
-      body.classList.remove("nav-open");
-      if (navToggle) navToggle.setAttribute("aria-expanded", "false");
-    }
+    closeDropdowns(e.target.closest && e.target.closest(".nav-dropdown"));
+    if (!e.target.closest(".site-header")) closeNav(false);
   });
+  doc.addEventListener("focusin", function (e) {
+    closeDropdowns(e.target.closest && e.target.closest(".nav-dropdown"));
+    if (body.classList.contains("nav-open") && !e.target.closest(".site-header")) closeNav(false);
+  });
+  doc.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape" || (dlgOpen && dlgOpen())) return;
+    var d = $(".nav-dropdown[open]");
+    if (d) { d.removeAttribute("open"); d.querySelector("summary").focus(); }
+    else closeNav(true);
+  });
+  $$(".site-nav a").forEach(function (a) { a.addEventListener("click", function () { closeNav(false); closeDropdowns(); }); });
+  // Restored from the back/forward cache, or widened past the mobile layout: start closed.
+  window.addEventListener("pageshow", function () { closeNav(false); closeDropdowns(); });
+  var desktop = matchMedia("(min-width: 901px)");
+  if (desktop.addEventListener) desktop.addEventListener("change", function (m) { if (m.matches) closeNav(false); });
+  var dlgOpen = null;
 
   /* ----------------------------------------------------- scroll loop */
   var header = $(".site-header");
@@ -96,14 +121,19 @@
   var railTrack = rail && $(".rail-track", rail);
   var railCount = rail && $("[data-rail-index]", rail);
   var railCards = railTrack ? $$(".card", railTrack) : [];
-  var railActive = matchMedia("(min-width: 901px)");
-  var railDistance = 0;
+  var railActive = matchMedia("(min-width: 901px) and (min-height: 641px)");
+  var railDistance = 0, railTop = 0;
+  var progressEl = $(".progress");
+  // Only the elements that use the scroll offset get it, so a scroll frame
+  // restyles three elements instead of the whole page.
+  var syEls = $$(".backdrop .grid-lines, .hero-visual, .scroll-cue");
 
   function sizeRail() {
     if (!rail) return;
     if (reduced || !railActive.matches) { rail.style.height = ""; railDistance = 0; railTrack.style.removeProperty("--rail-x"); return; }
-    railDistance = Math.max(0, railTrack.scrollWidth - window.innerWidth);
+    railDistance = Math.max(0, railTrack.scrollWidth - doc.documentElement.clientWidth);
     rail.style.height = (window.innerHeight + railDistance) + "px";
+    railTop = rail.getBoundingClientRect().top + window.scrollY;
   }
 
   var ticking = false;
@@ -114,12 +144,11 @@
       ticking = false;
       var sy = window.scrollY;
       var max = Math.max(1, root.scrollHeight - window.innerHeight);
-      root.style.setProperty("--progress", (sy / max).toFixed(4));
+      if (progressEl) progressEl.style.setProperty("--progress", (sy / max).toFixed(4));
       if (header) body.classList.toggle("scrolled", sy > 24);
-      if (!reduced) root.style.setProperty("--sy", Math.min(sy, 2000).toFixed(1));
+      if (!reduced && sy < 2400) syEls.forEach(function (el) { el.style.setProperty("--sy", sy.toFixed(1)); });
       if (rail && railDistance > 0) {
-        var top = rail.getBoundingClientRect().top;
-        var p = Math.min(1, Math.max(0, -top / railDistance));
+        var p = Math.min(1, Math.max(0, (sy - railTop) / railDistance));
         railTrack.style.setProperty("--rail-x", (-p * railDistance).toFixed(1) + "px");
         rail.style.setProperty("--rail", p.toFixed(4));
         if (railCount && railCards.length) {
@@ -135,6 +164,19 @@
   window.addEventListener("resize", function () { sizeRail(); onScroll(); });
   railActive.addEventListener && railActive.addEventListener("change", function () { sizeRail(); onScroll(); });
   if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(function () { sizeRail(); onScroll(); });
+  window.addEventListener("load", function () { sizeRail(); onScroll(); });
+
+  // Tabbing into a rail card scrolls the page to the point where that card is
+  // in view, rather than letting the browser scroll the clipped track.
+  if (rail) {
+    railTrack.addEventListener("focusin", function (e) {
+      var c = e.target.closest(".card");
+      if (!c || !railDistance) return;
+      var need = c.offsetLeft + c.offsetWidth - doc.documentElement.clientWidth + 48;
+      var p = Math.min(1, Math.max(0, need / railDistance));
+      window.scrollTo({ top: railTop + p * railDistance, behavior: reduced ? "auto" : "smooth" });
+    });
+  }
 
   /* --------------------------------------------------------- reveals */
   var revealEls = $$("[data-reveal]");
@@ -144,13 +186,18 @@
     // Anything already on screen when the page loads (including a reload
     // that restores the scroll position) shows at once, without animating.
     var vh = window.innerHeight;
+    // Once revealed, the element drops [data-reveal] so its own transitions
+    // (card hover, lift) apply again without the reveal's delay.
+    var done = function (el, wait) { setTimeout(function () { el.removeAttribute("data-reveal"); el.classList.remove("in", "instant"); }, wait); };
     revealEls.forEach(function (el) {
       var r = el.getBoundingClientRect();
-      if (r.top < vh && r.bottom > 0) el.classList.add("instant", "in");
+      if (r.top < vh && r.bottom > 0) { el.classList.add("instant", "in"); done(el, 0); }
     });
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
-        if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); }
+        if (!en.isIntersecting) return;
+        en.target.classList.add("in"); io.unobserve(en.target);
+        done(en.target, 900 + (parseInt(en.target.style.getPropertyValue("--i"), 10) || 0) * 60);
       });
     }, { rootMargin: "0px 0px -8% 0px", threshold: 0.12 });
     revealEls.forEach(function (el) { if (!el.classList.contains("in")) io.observe(el); });
@@ -188,16 +235,40 @@
     });
 
     if (heroVisual) {
-      var icon = $(".hero-icon", heroVisual);
-      heroVisual.addEventListener("pointermove", function (e) {
-        var r = heroVisual.getBoundingClientRect();
-        var px = (e.clientX - r.left) / r.width - 0.5, py = (e.clientY - r.top) / r.height - 0.5;
-        icon.style.setProperty("--tiltY", (px * 22).toFixed(1) + "deg");
-        icon.style.setProperty("--tiltX", (-py * 22).toFixed(1) + "deg");
-      });
-      heroVisual.addEventListener("pointerleave", function () {
-        icon.style.setProperty("--tiltY", "0deg"); icon.style.setProperty("--tiltX", "0deg");
-      });
+      /* The icon turns toward the cursor wherever it is on the page. Tilt
+         grows with distance from the icon and levels off smoothly (tanh),
+         so there is no boundary where it would snap. One rAF loop eases the
+         current angle toward the target and stops itself once settled. */
+      var tiltIcon = $(".hero-icon", heroVisual);
+      var MAX_TILT = 16, EASE = 0.12;
+      var tilt = { x: 0, y: 0 }, aim = { x: 0, y: 0 }, pointer = null, tiltRaf = 0;
+      var tiltFrame = function () {
+        tiltRaf = 0;
+        if (pointer) {
+          var r = heroVisual.getBoundingClientRect();
+          if (r.bottom > 0 && r.top < window.innerHeight) {
+            var reach = Math.max(240, r.width);
+            var dx = pointer.x - (r.left + r.width / 2), dy = pointer.y - (r.top + r.height / 2);
+            aim.y = MAX_TILT * Math.tanh(dx / reach);
+            aim.x = -MAX_TILT * Math.tanh(dy / reach);
+          } else { aim.x = 0; aim.y = 0; }
+        }
+        tilt.x += (aim.x - tilt.x) * EASE;
+        tilt.y += (aim.y - tilt.y) * EASE;
+        tiltIcon.style.setProperty("--tiltX", tilt.x.toFixed(2) + "deg");
+        tiltIcon.style.setProperty("--tiltY", tilt.y.toFixed(2) + "deg");
+        if (Math.abs(aim.x - tilt.x) > 0.01 || Math.abs(aim.y - tilt.y) > 0.01) tiltRaf = requestAnimationFrame(tiltFrame);
+      };
+      var tiltKick = function () { if (!tiltRaf) tiltRaf = requestAnimationFrame(tiltFrame); };
+      window.addEventListener("pointermove", function (e) {
+        if (e.pointerType && e.pointerType !== "mouse" && e.pointerType !== "pen") return;
+        pointer = { x: e.clientX, y: e.clientY };
+        tiltKick();
+      }, { passive: true });
+      // Cursor left the window or the tab lost focus: ease back to facing forward.
+      var tiltRest = function () { pointer = null; aim.x = 0; aim.y = 0; tiltKick(); };
+      doc.documentElement.addEventListener("mouseleave", tiltRest);
+      window.addEventListener("blur", tiltRest);
     }
   }
 
@@ -210,6 +281,16 @@
     anims.forEach(function (el) { aio.observe(el); });
   }
   doc.addEventListener("visibilitychange", function () { root.classList.toggle("tab-hidden", doc.hidden); });
+
+  /* --------------------------------------------- marquee pause button */
+  $$("[data-marquee-toggle]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var on = b.getAttribute("aria-pressed") !== "true";
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+      b.closest(".marquee").classList.toggle("held", on);
+      b.querySelector(".visually-hidden").textContent = on ? "Play the moving highlights" : "Pause the moving highlights";
+    });
+  });
 
   /* ------------------------------------------------------ count-up */
   $$("[data-count]").forEach(function (el) {
@@ -237,14 +318,22 @@
       var text = b.getAttribute("data-copy");
       (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
         .then(function () { toast("Source URL copied"); })
-        .catch(function () { toast(text); });
+        .catch(function () {
+          var code = b.parentNode.querySelector("code");
+          if (code) { var r = doc.createRange(); r.selectNodeContents(code); var sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); }
+          toast("Press ⌘C / Ctrl+C to copy the selected URL");
+        });
     });
   });
 
   /* ------------------------------------------------------ theme lab */
   function swatchOf(t) {
-    if (t.stops) return "conic-gradient(" + t.stops.light.slice(0, 7).concat(t.stops.light[0]).join(", ") + ")";
-    return "linear-gradient(135deg, " + t.top[0] + ", " + t.bottom[0] + ")";
+    var light = T.isLight(), k = light ? 0 : 1;
+    if (t.stops) {
+      var b = (light ? t.stops.light : t.stops.dark).slice(0, 7);
+      return "conic-gradient(" + b.concat(b[0]).join(", ") + ")";
+    }
+    return "linear-gradient(135deg, " + t.top[k] + ", " + t.bottom[k] + ")";
   }
   // The app's real background for the current mode.
   function previewBg(t) { return T.backgroundOf(t, T.isLight()); }
@@ -258,9 +347,10 @@
       b.className = "orb-btn";
       b.style.setProperty("--sw", swatchOf(t));
       b.setAttribute("data-theme-option", t.id);
-      b.setAttribute("aria-label", t.name + (t.pro ? " (Pro)" : ""));
+      b.setAttribute("aria-label", t.name + (t.pro ? " (Pro icon)" : ""));
+      b._theme = t;
       b.title = t.name;
-      if (t.pro) { var s = doc.createElement("span"); s.className = "pro"; s.textContent = "PRO"; s.setAttribute("aria-hidden", "true"); b.appendChild(s); }
+      if (t.pro) { var s = doc.createElement("span"); s.className = "pro"; s.textContent = "PRO"; s.title = "Pro icon, unlocked with a code"; s.setAttribute("aria-hidden", "true"); b.appendChild(s); }
       b.addEventListener("click", function (e) { setTheme(t.id, e); });
       orbs.appendChild(b);
     });
@@ -269,15 +359,17 @@
   /* -------------------------------------------- docs: themes grid */
   var themeGrid = $("#themeGrid");
   if (themeGrid) {
+    themeGrid.setAttribute("role", "group");
+    themeGrid.setAttribute("aria-label", "All themes");
     T.THEMES.forEach(function (t) {
       var b = doc.createElement("button");
       b.type = "button"; b.className = "theme-swatch"; b.title = "Apply " + t.name;
       b.setAttribute("data-theme-option", t.id);
-      var bg = doc.createElement("div"); bg.className = "swatch-bg";
+      var bg = doc.createElement("span"); bg.className = "swatch-bg";
       b._bg = bg; b._theme = t;
-      var label = doc.createElement("div"); label.className = "swatch-label";
+      var label = doc.createElement("span"); label.className = "swatch-label";
       var nm = doc.createElement("span"); nm.textContent = t.name; label.appendChild(nm);
-      if (t.pro) { var p = doc.createElement("span"); p.className = "pro-badge"; p.textContent = "Pro"; label.appendChild(p); }
+      if (t.pro) { var p = doc.createElement("span"); p.className = "pro-badge"; p.textContent = "Pro icon"; label.appendChild(p); }
       b.appendChild(bg); b.appendChild(label);
       b.addEventListener("click", function (e) { setTheme(t.id, e); });
       themeGrid.appendChild(b);
@@ -289,8 +381,10 @@
     $$("[data-theme-option]").forEach(function (el) {
       el.setAttribute("aria-pressed", el.getAttribute("data-theme-option") === t.id ? "true" : "false");
       if (el._bg) el._bg.style.background = previewBg(el._theme);
+      else if (el._theme) el.style.setProperty("--sw", swatchOf(el._theme));
     });
     $$("[data-theme-name]").forEach(function (el) { el.textContent = t.name; });
+    $$("[data-palette-open='theme ']").forEach(function (b) { b.setAttribute("aria-label", "Theme: " + t.name + ". Choose a theme"); });
     var heroIcon = $(".hero-icon");
     if (heroIcon) swapImg(heroIcon, "hero-img", iconSrc(t), 192);
     if (lab) {
@@ -301,10 +395,11 @@
       lab.style.setProperty("--lp-card", t.cream[k]);
       lab.style.setProperty("--lp-stroke", t.wrapper[k]);
       lab.style.setProperty("--lp-text", t.brownDarkest[k]);
-      lab.style.setProperty("--lp-sub", t.brownMid[k]);
-      lab.style.setProperty("--lp-b1", t.muffinTop[k]);
-      lab.style.setProperty("--lp-b2", t.muffinDark[k]);
-      lab.style.setProperty("--lp-on", T.buttonText(t, k));
+      lab.style.setProperty("--lp-sub", t.brownDark[k]);
+      var d = T.derive(t, k === 0);
+      lab.style.setProperty("--lp-b1", d.b1);
+      lab.style.setProperty("--lp-b2", d.b2);
+      lab.style.setProperty("--lp-on", d.onB);
       var sw = $$(".lp-swatches i", lab);
       [[t.top, "Background"], [t.muffinTop, "Buttons"], [t.cream, "Cards"], [t.pixel, "Accent"]].forEach(function (p, i) {
         if (sw[i]) { sw[i].style.background = p[0][k]; sw[i].title = p[1] + " " + p[0][k]; }
@@ -314,7 +409,7 @@
       if (mini) mini.src = iconSrc(t);
       var nm = $(".lp-name", lab); if (nm) nm.textContent = t.name;
       var sub = $(".lp-sub", lab);
-      if (sub) sub.textContent = (T.current() + 1) + " / " + T.THEMES.length + (t.pro ? " · Pro, unlocked with a code" : "");
+      if (sub) sub.textContent = (T.current() + 1) + " / " + T.THEMES.length + (t.pro ? " · Pro icon, unlocked with a code" : "");
     }
   }
   // Each theme has a matching app icon with the same id (Bakery is the main icon).
@@ -325,20 +420,23 @@
   // which animates out and is removed. Swaps only once the new image has
   // decoded, so it never flashes blank.
   function swapImg(box, cls, src, size) {
+    var abs = new URL(src, location.href).href;
+    if (box._want === abs) return;
     var cur = $("img." + cls + ":not(.out)", box);
-    if (cur && cur.src === new URL(src, location.href).href) return;
-    // Stale outgoing images from rapid switching are dropped at once.
-    $$("img." + cls + ".out", box).forEach(function (o) { o.remove(); });
+    if (!box._want && cur && cur.src === abs) { box._want = abs; return; }
+    box._want = abs;
     var img = doc.createElement("img");
     img.className = cls + " swap-in"; img.alt = ""; img.width = size; img.height = size; img.src = src;
     function show() {
+      if (box._want !== abs) return;  // a newer switch won the race
+      $$("img." + cls, box).forEach(function (o) {
+        if (reduced || doc.hidden) { o.remove(); return; }
+        o.classList.add("out");
+        o.addEventListener("animationend", function () { o.remove(); }, { once: true });
+        // animationend never fires if animations are paused or disabled.
+        setTimeout(function () { if (o.parentNode) o.remove(); }, 900);
+      });
       box.appendChild(img);
-      if (!cur) return;
-      if (reduced || doc.hidden) { cur.remove(); return; }
-      cur.classList.add("out");
-      cur.addEventListener("animationend", function () { cur.remove(); });
-      // animationend never fires if animations are paused or disabled.
-      setTimeout(function () { if (cur.parentNode) cur.remove(); }, 900);
     }
     if (img.decode) img.decode().then(show, show); else show();
   }
@@ -354,13 +452,30 @@
   T.onChange(syncTheme);
   syncTheme(T.THEMES[T.current()]);
 
+  /* --------------------------- docs: current page visible in the sidebar */
+  var side = $(".docs-sidebar"), curLink = side && $("a[aria-current='page']", side);
+  if (curLink && side.scrollWidth > side.clientWidth) {
+    side.scrollLeft = curLink.offsetLeft - (side.clientWidth - curLink.offsetWidth) / 2;
+  }
+
   /* --------------------------------------------- docs: anchors + toc */
+  var usedIds = {};
+  $$("[id]").forEach(function (el) { usedIds[el.id] = true; });
+  function slug(text) {
+    var base0 = text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48) || "section", id = base0, n = 2;
+    while (usedIds[id]) id = base0 + "-" + n++;
+    usedIds[id] = true;
+    return id;
+  }
+  // Every visible h2 in <main> gets an id (for the palette and for linking).
+  $$("main h2:not(.visually-hidden)").forEach(function (h) {
+    if (!h.id && !(h.parentNode.tagName === "SECTION" && h.parentNode.id)) h.id = slug(h.textContent);
+  });
   $$(".docs-content :is(h2, h3)[id], .docs-content section[id] > h2").forEach(function (h) {
-    var id = h.id || h.parentNode.id;
     var a = doc.createElement("a");
-    a.className = "anchor"; a.href = "#" + id; a.textContent = "#";
-    a.setAttribute("aria-label", "Link to this section");
-    h.insertBefore(a, h.firstChild);
+    a.className = "anchor"; a.href = "#" + (h.id || h.parentNode.id); a.textContent = "#";
+    a.setAttribute("aria-hidden", "true"); a.tabIndex = -1;
+    h.appendChild(a);
   });
   var tocLinks = $$(".docs-toc a[href^='#']");
   if (tocLinks.length && "IntersectionObserver" in window) {
@@ -370,8 +485,9 @@
     var tio = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
         if (en.isIntersecting) {
-          tocLinks.forEach(function (a) { a.classList.remove("active"); });
+          tocLinks.forEach(function (a) { a.classList.remove("active"); a.removeAttribute("aria-current"); });
           map[en.target.id].classList.add("active");
+          map[en.target.id].setAttribute("aria-current", "location");
         }
       });
     }, { rootMargin: "-20% 0px -70% 0px" });
@@ -401,93 +517,167 @@
   var dlg = $("[data-palette]");
   var openers = $$("[data-palette-open]");
   if (dlg && dlg.showModal) {
-    var input = $("input", dlg), list = $(".palette-list", dlg);
-    var items = [], sel = 0;
+    var input = $("input", dlg), list = $(".palette-list", dlg), count = $(".palette-count", dlg);
+    var items = [], sel = 0, opener = null, lastPointer = "";
+    dlgOpen = function () { return dlg.open; };
 
     function href(u) { return /^https?:/.test(u) ? u : base + u; }
+    function go(id) {
+      close();
+      var el = doc.getElementById(id);
+      if (!el) return;
+      // A heading inside the pinned rail: scroll to where the rail begins.
+      var target = el.closest("[data-rail]") || el;
+      target.scrollIntoView({ block: "start", behavior: reduced ? "auto" : "smooth" });
+      var h = el.matches("h2") ? el : el.querySelector("h2");
+      if (h) { h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); }
+      history.replaceState(null, "", "#" + id);
+    }
+    // Built once per opening: pages, this page's sections, actions, themes.
     function buildItems() {
       var out = [];
       PAGES.forEach(function (p) { out.push({ group: "Pages", label: p[0], hint: p[2], icon: ICON_PAGE, run: function () { location.href = href(p[1]); } }); });
-      $$("main h2[id], main section[id] > h2").forEach(function (h) {
-        var id = h.id || h.parentNode.id, txt = h.textContent.replace(/^#/, "").trim();
-        if (txt) out.push({ group: "On this page", label: txt, icon: ICON_HASH, run: function () { close(); location.hash = id; } });
+      $$("main h2:not(.visually-hidden)").forEach(function (h) {
+        var id = h.id || (h.parentNode.tagName === "SECTION" && h.parentNode.id);
+        var txt = h.textContent.replace(/#$/, "").trim();
+        if (id && txt) out.push({ group: "On this page", label: txt, icon: ICON_HASH, run: function () { go(id); } });
       });
-      out.push({ group: "Actions", label: "Cycle colour mode", hint: "auto / dark / light", icon: ICON_BOLT, run: function () { close(); modeBtn && modeBtn.click(); } });
-      out.push({ group: "Actions", label: "Copy SideStore / AltStore source URL", icon: ICON_BOLT, run: function () { close(); var c = $("[data-copy]"); if (c) c.click(); else navigator.clipboard && navigator.clipboard.writeText("https://kiddreads.github.io/MuffinEMU/apps.json").then(function () { toast("Source URL copied"); }); } });
+      out.push({ group: "Actions", label: "Cycle colour mode", hint: "auto / dark / light", icon: ICON_BOLT, run: function () { close(); if (modeBtn) modeBtn.click(); } });
+      out.push({ group: "Actions", label: "Copy SideStore / AltStore source URL", icon: ICON_BOLT, run: function () {
+        close();
+        var c = $("[data-copy]");
+        if (c) { c.click(); return; }
+        var url = "https://kiddreads.github.io/MuffinEMU/apps.json";
+        (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject())
+          .then(function () { toast("Source URL copied"); }, function () { toast(url); });
+      } });
       out.push({ group: "Actions", label: "Random theme", icon: ICON_BOLT, run: function () { close(); var i; do { i = Math.floor(Math.random() * T.THEMES.length); } while (i === T.current()); setTheme(T.THEMES[i].id); } });
       T.THEMES.forEach(function (t) {
-        out.push({ group: "Themes", label: t.name + (t.pro ? " · Pro" : ""), sw: swatchOf(t), hint: t.id === T.THEMES[T.current()].id ? "current" : "", run: function () { close(); setTheme(t.id); } });
+        out.push({ group: "Themes", label: t.name, sw: swatchOf(t), hint: t.id === T.THEMES[T.current()].id ? "current" : (t.pro ? "Pro icon" : ""), run: function () { close(); setTheme(t.id); } });
       });
       return out;
     }
-    function score(q, s) {
-      s = s.toLowerCase();
+    var all = [];
+    // Label matches rank above hint matches; loose (subsequence) matches need
+    // at least three characters.
+    function score(q, it) {
+      var l = it.label.toLowerCase(), h = (it.hint || "").toLowerCase();
       if (!q) return 1;
-      if (s.indexOf(q) === 0) return 3;
-      if (s.indexOf(q) > -1) return 2;
-      var i = 0; for (var k = 0; k < s.length && i < q.length; k++) if (s[k] === q[i]) i++;
+      if (l.indexOf(q) === 0) return 5;
+      if (l.indexOf(" " + q) > -1) return 4;
+      if (l.indexOf(q) > -1) return 3;
+      if (h.indexOf(q) > -1) return 2;
+      if (q.length < 3) return 0;
+      var i = 0; for (var k = 0; k < l.length && i < q.length; k++) if (l[k] === q[i]) i++;
       return i === q.length ? 1 : 0;
     }
     function render() {
-      var q = input.value.trim().toLowerCase();
-      var mode = null;
-      if (q.indexOf("theme ") === 0 || q === "theme") { mode = "Themes"; q = q.slice(6); }
-      var all = buildItems().filter(function (it) { return !mode || it.group === mode; });
-      items = all.map(function (it) { return [score(q, it.label + " " + (it.hint || "")), it]; })
+      var q = input.value.trim().toLowerCase(), only = null;
+      var m = /^themes?(\s+|$)/.exec(q);
+      if (m) { only = "Themes"; q = q.slice(m[0].length); }
+      var pool = all.filter(function (it) { return !only || it.group === only; });
+      items = q ? pool.map(function (it) { return [score(q, it), it]; })
         .filter(function (x) { return x[0] > 0; })
-        .sort(function (a, b) { return q ? b[0] - a[0] : 0; })
-        .map(function (x) { return x[1]; });
-      if (!q) items = all;
-      list.innerHTML = "";
-      if (!items.length) { list.innerHTML = '<li class="palette-empty">Nothing matches.</li>'; return; }
-      var lastGroup = null;
+        .sort(function (a, b) { return b[0] - a[0]; })
+        .map(function (x) { return x[1]; }) : pool;
+      list.textContent = "";
+      input.setAttribute("aria-expanded", items.length ? "true" : "false");
+      if (count) count.textContent = items.length ? items.length + (items.length === 1 ? " result" : " results") : "No results";
+      if (!items.length) {
+        input.removeAttribute("aria-activedescendant");
+        var empty = doc.createElement("li");
+        empty.className = "palette-empty"; empty.setAttribute("role", "presentation"); empty.textContent = "Nothing matches.";
+        list.appendChild(empty);
+        return;
+      }
+      var group = null, groupList = list;
       items.forEach(function (it, i) {
-        if (it.group !== lastGroup && !q) {
-          var g = doc.createElement("li"); g.className = "palette-group"; g.textContent = it.group; g.setAttribute("role", "presentation");
-          list.appendChild(g); lastGroup = it.group;
+        if (it.group !== group) {
+          group = it.group;
+          var g = doc.createElement("li"), gid = "pg-" + i;
+          g.setAttribute("role", "presentation");
+          g.innerHTML = '<div class="palette-group" id="' + gid + '"></div><ul role="group"></ul>';
+          g.firstChild.textContent = group;
+          g.lastChild.setAttribute("aria-labelledby", gid);
+          list.appendChild(g);
+          groupList = g.lastChild;
         }
         var li = doc.createElement("li");
         li.className = "palette-item"; li.id = "pi-" + i; li.setAttribute("role", "option");
-        li.innerHTML = (it.sw ? '<span class="sw"></span>' : it.icon) + "<span></span>" + (it.hint ? '<span class="hint"></span>' : "");
+        li.innerHTML = (it.sw ? '<span class="sw" aria-hidden="true"></span>' : it.icon) + "<span></span>" + (it.hint ? '<span class="hint"></span>' : "");
         if (it.sw) li.firstChild.style.background = it.sw;
         li.children[1].textContent = it.label;
         if (it.hint) li.lastChild.textContent = it.hint;
+        li.addEventListener("mousedown", function (e) { e.preventDefault(); });  // keep focus in the input
         li.addEventListener("click", function () { it.run(); });
-        li.addEventListener("pointermove", function () { if (sel !== i) select(i, false); });
-        list.appendChild(li);
+        li.addEventListener("pointermove", function (e) {
+          // Only a real pointer move selects (not the list scrolling under a still mouse).
+          var at = e.clientX + "," + e.clientY;
+          if (at !== lastPointer && sel !== i) select(i, false);
+          lastPointer = at;
+        });
+        groupList.appendChild(li);
       });
       select(0, true);
     }
     function select(i, scroll) {
-      sel = Math.max(0, Math.min(items.length - 1, i));
+      if (!items.length) return;
+      sel = (i + items.length) % items.length;  // wraps at both ends
       $$(".palette-item", list).forEach(function (el) { el.setAttribute("aria-selected", el.id === "pi-" + sel ? "true" : "false"); });
       var el = doc.getElementById("pi-" + sel);
       if (el) { input.setAttribute("aria-activedescendant", el.id); if (scroll) el.scrollIntoView({ block: "nearest" }); }
     }
     function open(prefill) {
       if (dlg.open) return;
+      closeNav(false); closeDropdowns();
+      opener = doc.activeElement;
+      all = buildItems();
       input.value = prefill || "";
       render();
       dlg.showModal();
+      root.classList.add("palette-open");
       input.focus();
       if (prefill) input.setSelectionRange(prefill.length, prefill.length);
     }
     function close() { if (dlg.open) dlg.close(); }
+    dlg.addEventListener("close", function () {
+      root.classList.remove("palette-open");
+      if (opener && opener.focus && doc.contains(opener)) opener.focus({ preventScroll: true });
+    });
 
     openers.forEach(function (b) {
       b.addEventListener("click", function () { open(b.getAttribute("data-palette-open") || ""); });
     });
     input.addEventListener("input", render);
     input.addEventListener("keydown", function (e) {
+      if (e.isComposing) return;
       if (e.key === "ArrowDown") { e.preventDefault(); select(sel + 1, true); }
       else if (e.key === "ArrowUp") { e.preventDefault(); select(sel - 1, true); }
+      else if (e.key === "Home" && e.ctrlKey) { e.preventDefault(); select(0, true); }
+      else if (e.key === "End" && e.ctrlKey) { e.preventDefault(); select(items.length - 1, true); }
       else if (e.key === "Enter") { e.preventDefault(); if (items[sel]) items[sel].run(); }
     });
-    dlg.addEventListener("click", function (e) { if (e.target === dlg) close(); });
+    // Close on a click that starts and ends on the backdrop (not a drag out of the input).
+    var downOn = null;
+    dlg.addEventListener("mousedown", function (e) { downOn = e.target; });
+    dlg.addEventListener("click", function (e) { if (e.target === dlg && downOn === dlg) close(); });
     doc.addEventListener("keydown", function (e) {
-      var k = e.key.toLowerCase();
-      if ((e.metaKey || e.ctrlKey) && k === "k") { e.preventDefault(); dlg.open ? close() : open(); }
-      else if (k === "/" && !dlg.open && !/input|textarea|select/i.test(doc.activeElement.tagName)) { e.preventDefault(); open(); }
+      var k = (e.key || "").toLowerCase(), a = doc.activeElement;
+      var typing = a && (/^(input|textarea|select)$/i.test(a.tagName) || a.isContentEditable);
+      if ((e.metaKey || e.ctrlKey) && !e.altKey && k === "k") { e.preventDefault(); dlg.open ? close() : open(); }
+      else if (k === "/" && !e.metaKey && !e.ctrlKey && !e.altKey && !dlg.open && !typing) { e.preventDefault(); open(); }
     });
+    // Show the shortcut the way this platform writes it.
+    if (!/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)) {
+      $$(".kbd[data-shortcut]").forEach(function (el) { el.textContent = "Ctrl K"; });
+    }
+  } else {
+    openers.forEach(function (b) { b.hidden = true; });
   }
+
+  /* ------------------------------------------- other tabs stay in step */
+  window.addEventListener("storage", function (e) {
+    if (e.key === T.STORE_KEY && e.newValue) T.setById(e.newValue, false);
+    else if (e.key === "muffinemu.site.mode") T.setMode(e.newValue || "auto", false);
+  });
 })();
