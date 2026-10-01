@@ -313,11 +313,42 @@
       lab.style.setProperty("--lab-bg", previewBg(t));
       var sw = $$(".lp-swatches i", lab);
       [t.top, t.navy, t.pixel, t.blush].forEach(function (pair, i) { if (sw[i]) sw[i].style.background = pair[0]; });
+      swapIcon(t);
       var nm = $(".lp-name", lab); if (nm) nm.textContent = t.name;
       var sub = $(".lp-sub", lab);
       if (sub) sub.textContent = (T.current() + 1) + " / " + T.THEMES.length + (t.pro ? " · Pro, unlocked with a code" : "");
     }
   }
+  // Each theme has a matching app icon with the same id (Bakery is the main icon).
+  function iconSrc(t) { return base + "assets/icons/" + t.id + ".png"; }
+  var preloaded = {};
+  function preload(t) { if (!preloaded[t.id]) { preloaded[t.id] = new Image(); preloaded[t.id].src = iconSrc(t); } }
+  function swapIcon(t) {
+    var stage = $(".lp-stage", lab), mini = $(".lp-mini", lab), src = iconSrc(t);
+    if (mini) mini.src = src;
+    if (!stage) return;
+    var cur = $(".lp-icon:not(.out)", stage);
+    if (cur && cur.getAttribute("src") === src) return;
+    var img = doc.createElement("img");
+    img.className = "lp-icon"; img.alt = ""; img.width = 192; img.height = 192; img.src = src;
+    function show() {
+      stage.appendChild(img);
+      if (cur) {
+        if (reduced) cur.remove();
+        else { cur.classList.add("out"); cur.addEventListener("animationend", function () { cur.remove(); }); }
+      }
+    }
+    // Swap only once the new image has decoded, so it never flashes blank.
+    if (img.decode) img.decode().then(show, show); else show();
+  }
+  if (orbs) {
+    $$(".orb-btn", orbs).forEach(function (b) {
+      var t = T.THEMES[$$(".orb-btn", orbs).indexOf(b)];
+      b.addEventListener("pointerenter", function () { preload(t); });
+      b.addEventListener("focus", function () { preload(t); });
+    });
+  }
+
   T.onChange(syncTheme);
   syncTheme(T.THEMES[T.current()]);
 
