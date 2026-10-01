@@ -1,0 +1,26 @@
+<nav class="docs-breadcrumb" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="index.html">Documentation</a></li>
+        <li aria-current="page">Save States</li>
+      </ol>
+    </nav>
+    <h1>Save States</h1>
+    <p class="subtitle">4 slots per game, alongside your normal in-game saves.</p>
+
+    <div class="callout callout-warn">
+      <span class="callout-label">Limit</span>
+      <p><strong>A save state only loads back into the same running game it was taken from.</strong> If you quit the game or the app, saves from before that point won't load, so use them as a checkpoint within one play session. Normal in-game saves are what carry progress between sessions.</p>
+    </div>
+
+    <h2 id="where">Where they live</h2>
+    <p>Each game gets its own folder, <code>Documents/SaveStates/&lt;game.id&gt;/</code>, with up to 4 files named <code>slot1.sav</code> through <code>slot4.sav</code>. Open the sheet from the in-game top bar. Each slot shows empty or when it was saved, with Save/Overwrite, Load and Delete actions.</p>
+
+    <h2 id="captured">What's saved</h2>
+    <p>A save state stores the game's memory. It does not store graphics state, so after loading, a texture may briefly show its old picture until the game redraws it.</p>
+    <p>Saving pauses the game briefly. If no game is running, or the write fails, the save is reported as failed.</p>
+
+    <nav class="doc-next" aria-label="Previous and next page">
+      <a href="screen-layout.html"><span class="dir">Previous</span>&larr; Screen Layout</a>
+      <a href="controls.html"><span class="dir">Next</span>Controls &amp; GamePad &rarr;</a>
+    </nav>

@@ -1,0 +1,38 @@
+    <symbol id="i-chip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="6" y="6" width="12" height="12" rx="2.5"/>
+      <path d="M9.5 3v3M14.5 3v3M9.5 18v3M14.5 18v3M3 9.5h3M3 14.5h3M18 9.5h3M18 14.5h3"/>
+    </symbol>
+    <symbol id="i-display" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2.5" y="4" width="19" height="13" rx="2"/>
+      <path d="M8.5 21h7M12 17v4"/>
+    </symbol>
+    <symbol id="i-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 6.5S10 4.5 4 4.5v13c6 0 8 2 8 2s2-2 8-2v-13c-6 0-8 2-8 2z"/>
+      <path d="M12 6.5v15"/>
+    </symbol>
+    <symbol id="i-layout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2.5" y="4.5" width="19" height="15" rx="2"/>
+      <path d="M14 4.5v15M14 12h7.5"/>
+    </symbol>
+    <symbol id="i-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4.5 4.5h11l4 4v11a1 1 0 0 1-1 1h-14a1 1 0 0 1-1-1v-14a1 1 0 0 1 1-1z"/>
+      <path d="M8 4.5v5h6v-5M7.5 20v-5h9v5"/>
+    </symbol>
+    <symbol id="i-gamepad" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7.5 7.5h9a5 5 0 0 1 5 5v1.5a3.5 3.5 0 0 1-6.3 2.1L14 14.5h-4l-1.2 1.6A3.5 3.5 0 0 1 2.5 14v-1.5a5 5 0 0 1 5-5z"/>
+      <path d="M6.5 11.5v2M5.5 12.5h2M16.5 11.5h.01M18.5 13.5h.01"/>
+    </symbol>
+    <symbol id="i-touch" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 10.5V5a1.8 1.8 0 1 1 3.6 0v7"/>
+      <path d="M13.6 12v-1a1.7 1.7 0 0 1 3.4 0v1M17 12.5v-.5a1.7 1.7 0 0 1 3.4 0V16a5.5 5.5 0 0 1-5.5 5.5h-1.8a5.5 5.5 0 0 1-4.6-2.5l-2.4-3.7a1.7 1.7 0 0 1 2.7-2l1.2 1.4"/>
+    </symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4.5 4.5 0 0 0 4.5-4.5C21.5 6.3 17.2 3 12 3z"/>
+      <path d="M7.5 12h.01M9.5 8.2h.01M14 7.5h.01M17 10h.01"/>
+    </symbol>
+    <symbol id="i-puzzle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 3.5a2 2 0 0 1 4 0c0 .6-.3 1-.3 1.5h3.8a1 1 0 0 1 1 1V10c-.5 0-1-.3-1.6-.3a2 2 0 0 0 0 4c.6 0 1.1-.3 1.6-.3v4a1 1 0 0 1-1 1h-4c0-.5.3-1 .3-1.6a2 2 0 0 0-4 0c0 .6.3 1.1.3 1.6h-4a1 1 0 0 1-1-1v-3.8c-.5 0-.9.3-1.5.3a2 2 0 0 1 0-4c.6 0 1 .3 1.5.3V6a1 1 0 0 1 1-1h3.8C10.3 4.5 10 4.1 10 3.5z"/>
+    </symbol>
+    <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3.5v12M7.5 11l4.5 4.5 4.5-4.5M4 19.5h16"/>
+    </symbol>

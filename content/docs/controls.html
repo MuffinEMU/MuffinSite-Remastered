@@ -1,0 +1,76 @@
+<nav class="docs-breadcrumb" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="index.html">Documentation</a></li>
+        <li aria-current="page">Controls &amp; GamePad</li>
+      </ol>
+    </nav>
+    <h1>Controls &amp; GamePad</h1>
+    <p class="subtitle">A measured on-screen Wii U GamePad, a hide-controls button, comfort controls, and an alternative pad if you would rather use it.</p>
+    <nav class="docs-toc" aria-labelledby="toc-heading">
+      <p id="toc-heading">On this page</p>
+      <ul>
+        <li><a href="#gamepad">The on-screen GamePad</a></li>
+        <li><a href="#control-styles">Control styles</a></li>
+        <li><a href="#motion">Motion aiming</a></li>
+        <li><a href="#melo-controller">Melo-Controller</a></li>
+        <li><a href="#skins">Controller skins</a></li>
+      </ul>
+    </nav>
+
+    <h2 id="gamepad">The on-screen GamePad</h2>
+    <p>The on-screen pad is laid out from measurements of a real Wii U GamePad, so on an iPad the buttons are the same size as the real ones. The full measurements are in the <a href="../gamepad-layout/">GamePad layout reference</a>.</p>
+
+    <h3>Hide controls</h3>
+    <p>A button in the in-game top bar hides the on-screen pad without pausing, for when you need to touch the GamePad screen underneath. Held buttons are released when you hide it.</p>
+
+    <h3>Comfort controls</h3>
+    <p>Moves L/ZL/minus onto the left stick and R/ZR/plus onto the right stick. Needs the analog sticks turned on.</p>
+
+    <h3>Sizing, feel, and layout</h3>
+    <ul>
+      <li><strong>Button size</strong> and <strong>opacity</strong> sliders — they start from a default picked for your screen.</li>
+      <li><strong>Add analog sticks</strong> — shown alongside the d-pad and face buttons, not instead of them.</li>
+      <li><strong>Stick gate</strong>, <strong>deadzone</strong> and <strong>response curve</strong>.</li>
+      <li><strong>Haptic feedback</strong> — a light tap on press; turn it off if it reads as buzzing rather than a button.</li>
+      <li><strong>Reset layout</strong> — puts every on-screen control setting back to its shipped default.</li>
+    </ul>
+
+    <h2 id="control-styles">Control styles</h2>
+    <p>MuffinEMU's own pad is still the default. Four other styles are there to try, under Settings &gt; On-screen Controls &gt; Control style, or from the move-controls button in the in-game top bar once one is on. Choosing one switches melo-controls off, and choosing MuffinEMU brings the original pad back exactly as it was.</p>
+    <ul>
+      <li><strong>Zone</strong> — the GamePad's own layout with forgiving, gap-free touch zones. Slide a thumb from one button to the next, and press two buttons with one thumb by resting it between them.</li>
+      <li><strong>Float</strong> — the sticks appear under your thumbs wherever you touch on each side, and only while you touch. The right side is a floating camera stick, or a swipe if you switch Camera to Swipe. Double-tap and hold to press a stick in (L3 or R3).</li>
+      <li><strong>Adaptive</strong> — starts like Zone, then the button clusters drift, slowly and only a little, toward where your thumbs actually land. It learns separately for each game. Reset learned layouts puts them back.</li>
+      <li><strong>Frame</strong> — fits the controls into the margins around the picture so they don't cover the game. On a screen with no spare margin it uses Zone's layout.</li>
+    </ul>
+    <p>All four work on every iPhone and iPad that runs MuffinEMU, at any window size. Size, opacity, haptics and the stick gate, deadzone and response curve apply to them. They don't support dragging individual buttons. Touching the GamePad picture where no control sits sends a Wii U touchscreen touch at that spot.</p>
+
+    <h2 id="motion">Motion aiming</h2>
+    <p>Games that aim with the GamePad's gyro, Splatoon among them, read this device's own motion sensors. Hold the iPad the way you would hold the GamePad, screen toward you, and tilt or turn it to aim. It works in both landscape orientations. Settings &gt; Motion &amp; Aiming has:</p>
+    <ul>
+      <li><strong>Motion aiming</strong> &mdash; on by default. Turn it off to aim with the sticks only; the game then sees a GamePad that never moves.</li>
+      <li><strong>Motion from</strong> &mdash; this device, or a connected controller that has motion sensors (DualShock 4, DualSense, Switch Pro Controller). Controller motion has had little testing.</li>
+      <li><strong>Sensitivity</strong> &mdash; how far the GamePad turns for a given movement. 1.00x matches the real GamePad.</li>
+      <li><strong>Recentre aim</strong> &mdash; treats the current position as straight ahead. Use it when aim has drifted.</li>
+    </ul>
+    <p>A game with its own motion option needs it switched off as well for stick-only aiming.</p>
+    <div class="callout callout-unverified">
+      <span class="callout-label">Not confirmed on hardware</span>
+      <p>Motion aiming has not been tested on a device yet. If the aim turns the wrong way, or drifts, please <a href="https://github.com/kiddreads/MuffinEMU/issues">report it</a> with the device and orientation.</p>
+    </div>
+
+    <h2 id="melo-controller">Melo-Controller</h2>
+    <p><a href="https://github.com/stossy11/Melo-Controller">Melo-Controller</a>, stossy11's touch controller, is available as a full alternative to MuffinEMU's measured pad — toggle "Use melo-controls" in Settings &gt; On-screen Controls. It brings its own button art, its own layout editor for repositioning and resizing individual buttons, and its own per-game layouts. A separate scale slider resizes the whole pad as one unit on top of whatever the layout editor has already done to individual buttons.</p>
+    <div class="callout callout-note">
+      <span class="callout-label">Licensing</span>
+      <p>Melo-Controller is GPL-3.0 and is linked into every MuffinEMU build whether or not the toggle is on. Because GPL-3.0 code is present in the binary, a MuffinEMU IPA as a whole is distributed under GPL-3.0 — see <a href="../index.html#credits">Credits &amp; license</a>.</p>
+    </div>
+
+    <h2 id="skins">Controller skins</h2>
+    <p>20 visual skins for the on-screen pad, independent of layout, including Standard, Sky, Violet, Indigo, Primary, Lilac Grey, Red and Cream, Charcoal, Blue and Rose, Green, Slate, Arcade Cabinet, Black and Gold, Sunset Orange, Forest Gold, Minimal, Glass, Neon, Dark Mode and Light Mode. A skin you picked under an older name stays selected.</p>
+
+    <nav class="doc-next" aria-label="Previous and next page">
+      <a href="save-states.html"><span class="dir">Previous</span>&larr; Save States</a>
+      <a href="themes.html"><span class="dir">Next</span>Themes &amp; Icons &rarr;</a>
+    </nav>

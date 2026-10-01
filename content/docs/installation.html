@@ -1,0 +1,112 @@
+<nav class="docs-breadcrumb" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="index.html">Documentation</a></li>
+        <li aria-current="page">Installation</li>
+      </ol>
+    </nav>
+    <h1>Installation</h1>
+    <p class="subtitle">iPhone and iPad, iOS 15 or later. There are two builds, and picking the wrong one is the most common install problem — so start with which installer you use.</p>
+    <nav class="docs-toc" aria-labelledby="toc-heading">
+      <p id="toc-heading">On this page</p>
+      <ul>
+        <li><a href="#pick">1. Pick your build</a></li>
+        <li><a href="#install">2. Install it</a></li>
+        <li><a href="#jit">3. Turn on JIT</a></li>
+        <li><a href="#keys">4. Add keys.txt</a></li>
+        <li><a href="#moltenvk">MoltenVK</a></li>
+        <li><a href="#source">Building from source</a></li>
+      </ul>
+    </nav>
+
+    <h2 id="pick">1. Pick your build</h2>
+    <p>Two IPAs are published with every release, because the two install paths need different builds. Pick the row that matches how you install apps.</p>
+
+    <div class="choice-grid">
+      <div class="choice-card">
+        <h3>SideStore / AltStore / LiveContainer</h3>
+        <p class="choice-file"><code>MuffinEMU.ipa</code></p>
+        <ul>
+          <li>Re-signed with your own Apple ID at install.</li>
+          <li>Unsigned; the installer signs it.</li>
+          <li>JIT entitlements are <strong>stripped</strong> by that re-sign, so you attach JIT separately with StikJIT, or SideStore's or LiveContainer's own JIT attach.</li>
+        </ul>
+      </div>
+      <div class="choice-card">
+        <h3>TrollStore / jailbroken</h3>
+        <p class="choice-file"><code>MuffinEMU-fakesigned.ipa</code></p>
+        <ul>
+          <li>Ad-hoc signed — no certificate, no team ID.</li>
+          <li>JIT entitlements are <strong>embedded in the IPA itself</strong>.</li>
+          <li>Some tools call this "not signed". That is normal for an ad-hoc signature.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout callout-note">
+      <span class="callout-label">Why two files</span>
+      <p>SideStore re-signs at install and removes JIT entitlements, so it needs the unsigned build. TrollStore keeps them, so it gets the ad-hoc signed build.</p>
+    </div>
+
+    <h2 id="install">2. Install it</h2>
+
+    <h3>SideStore / AltStore / LiveContainer</h3>
+    <div class="install-row">
+      <a class="btn btn-primary btn-sm" href="sidestore://source?url=https://kiddreads.github.io/MuffinEMU/apps.json">Add to SideStore</a>
+      <a class="btn btn-secondary btn-sm" href="altstore://source?url=https://kiddreads.github.io/MuffinEMU/apps.json">Add to AltStore</a>
+    </div>
+    <p>Or add the source by hand: <span class="url">https://kiddreads.github.io/MuffinEMU/apps.json</span></p>
+
+    <h3>TrollStore / jailbroken</h3>
+    <p>Add the source: <span class="url">https://kiddreads.github.io/MuffinEMU/trollstore.json</span></p>
+    <p>Or download <code>MuffinEMU-fakesigned.ipa</code> directly from <a href="https://github.com/kiddreads/MuffinEMU/releases/latest">the latest release</a>.</p>
+
+    <h3>Nightly builds</h3>
+    <p>Want the newest build instead? Nightly sources: <span class="url">https://kiddreads.github.io/MuffinEMU/nightly.json</span> (SideStore, AltStore, LiveContainer) and <span class="url">https://kiddreads.github.io/MuffinEMU/nightly-trollstore.json</span> (TrollStore). Nightly builds are untested and replace a standard install.</p>
+
+    <h3>Experimental builds (for testers)</h3>
+    <p>Unfinished test builds of work in progress, published by hand. Experimental sources: <span class="url">https://kiddreads.github.io/MuffinEMU/experimental.json</span> (SideStore, AltStore, LiveContainer) and <span class="url">https://kiddreads.github.io/MuffinEMU/experimental-trollstore.json</span> (TrollStore). Every experiment is listed as its own version, newest first. Each one replaces an installed MuffinEMU (same bundle identifier, so your games and saves carry over) and can misbehave; they never appear in the standard or nightly sources. For normal play use the standard source.</p>
+
+    <p>MuffinEMU uses its own bundle identifier (<code>com.kiddreads.MuffinEMU</code>), Every build of <code>main</code> is published as a numbered release going up by 0.1 — after .9 comes the next whole number: 1.0, 1.1 … 1.9, 2.0.</p>
+
+    <h2 id="jit">3. Turn on JIT</h2>
+    <p class="symptom-answer">The AArch64 recompiler needs two things at once. You need both, or MuffinEMU uses the interpreter.</p>
+    <ol class="step-list">
+      <li><strong>Attach a JIT enabler</strong> — StikJIT, or the JIT attach that SideStore or LiveContainer provides itself.</li>
+      <li><strong>Turn the recompiler on</strong> in Settings &gt; CPU.</li>
+    </ol>
+    <p>Without both, MuffinEMU uses the interpreter, which is much slower. Settings &gt; CPU shows which one this launch is using and why.</p>
+
+    <div class="callout callout-note">
+      <p>If a game glitches, desyncs or crashes, Settings &gt; CPU has a <strong>Favour accuracy</strong> option — slower, but worth trying before assuming something else is broken. Restart the game after changing any CPU setting; they do not apply mid-session.</p>
+    </div>
+
+    <h2 id="keys">4. Add keys.txt</h2>
+    <p class="symptom-answer">Encrypted retail games need <code>keys.txt</code> dumped from your own Wii U. Homebrew does not.</p>
+    <p>MuffinEMU does not include keys. Use the <code>keys.txt</code> from your own Wii U.</p>
+    <p>Drop the file into the <code>keys</code> folder MuffinEMU creates in the Files app — under the app's own name, since file sharing is enabled — or import it from Settings. A file dropped in mid-session is picked up before the next key read, so no relaunch is needed.</p>
+    <h3 id="game-folders">Encrypted game folders</h3>
+    <p>A game folder made of <code>title.tmd</code>, <code>title.tik</code>, <code>title.cert</code> and encrypted <code>.app</code> / <code>.h3</code> files works too, in Files &gt; MuffinEMU &gt; Roms or through the folder importer. It is decrypted with the title key in its own <code>title.tik</code>, so it needs no <code>keys.txt</code>. Every <code>.app</code> file listed by <code>title.tmd</code> has to be present; file-name case does not matter. If a file is missing or the ticket doesn't fit, MuffinEMU names the problem when you start the game.</p>
+    <p>A parent folder with separate subfolders for the game, its update and its DLC (each with its own <code>title.tmd</code>) is recognised: the game is the library entry and the update and DLC are used when it starts.</p>
+
+    <h2 id="moltenvk">MoltenVK</h2>
+    <p>The Vulkan renderer can use MoltenVK 1.4.3 (default) or 1.2.8 — Settings &gt; Graphics. The choice applies on the next launch. Metal, the default renderer, does not use MoltenVK.</p>
+
+    <h2 id="source">Building from source</h2>
+    <p>CI is the build: <code>.github/workflows/build-ios-app.yml</code> runs the whole thing on a macOS runner. By hand, on a Mac with full Xcode:</p>
+    <pre><code>git clone --recursive https://github.com/kiddreads/MuffinEMU.git
+cd MuffinEMU
+cmake -S . -B build-ios -G Ninja \
+  -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 \
+  -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DVCPKG_TARGET_TRIPLET=arm64-ios \
+  -DBUILD_HEADLESS_DYLIB=ON -DCMAKE_MACOSX_BUNDLE=OFF -DCMAKE_BUILD_TYPE=Release
+cmake --build build-ios --target CemuBin
+mkdir -p build-ios/out &amp;&amp; cp -R "$(find build-ios bin -type d -name Cemu.framework -not -path '*/CMakeFiles/*' | head -n1)" build-ios/out/
+cd src/ios &amp;&amp; xcodegen generate
+xcodebuild -project MuffinEMU.xcodeproj -scheme MuffinEMU -sdk iphoneos -configuration Release CODE_SIGNING_ALLOWED=NO build</code></pre>
+    <p>The bridge and its glue compile into <code>Cemu.framework</code> together with the core, against the core's own headers. The Xcode app compiles Swift only and embeds that framework.</p>
+
+    <nav class="doc-next" aria-label="Previous and next page">
+      <a href="index.html"><span class="dir">Previous</span>&larr; Overview</a>
+      <a href="features.html"><span class="dir">Next</span>Features overview &rarr;</a>
+    </nav>

@@ -1,0 +1,228 @@
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="pill" data-reveal><span class="pulse" aria-hidden="true"></span>Wii U emulation · iPhone &amp; iPad · Open source</span>
+      <h1 class="wordmark" data-split>Muffin<span class="accent">EMU</span></h1>
+      <p class="lede" data-reveal style="--i:4">A Wii U emulator for iPhone and iPad, built on Cemu — with a Metal-native renderer, measured on-screen GamePad controls, and the recompiler enabled wherever iOS allows it.</p>
+      <div class="hero-ctas" data-reveal style="--i:5">
+        <a class="btn btn-primary" href="docs/installation.html"><svg aria-hidden="true"><use href="#i-download"/></svg>Get MuffinEMU</a>
+        <a class="btn btn-outline" href="https://github.com/kiddreads/MuffinEMU"><svg aria-hidden="true"><use href="#i-github"/></svg>View source</a>
+      </div>
+      <p class="hero-note" data-reveal style="--i:6">Tested on an iPad Pro (A12Z). Free and open source; bring your own games and keys. <a href="#status">Status →</a></p>
+    </div>
+    <div class="hero-visual" aria-hidden="true" data-reveal="scale" style="--i:2">
+      <div class="orb"></div>
+      <div class="ring"></div>
+      <div class="ring r2"></div>
+      <div class="ring r3"></div>
+      <div class="hero-icon"><img src="assets/icon.png" alt="" width="512" height="512"></div>
+      <span class="chip c1"><i></i>Metal renderer</span>
+      <span class="chip c2"><i></i>Measured GamePad</span>
+      <span class="chip c3"><i></i>31 themes</span>
+    </div>
+  </div>
+  <div class="scroll-cue" aria-hidden="true">Scroll<span></span></div>
+</section>
+
+<div class="marquee" aria-label="Highlights">
+  <div class="marquee-track">
+    <span>Built on Cemu</span><span>Metal-native renderer</span><span>Vulkan via MoltenVK</span><span>4 save-state slots per game</span><span>20 controller skins</span><span>31 app icons &amp; themes</span><span>Graphic packs</span><span>DLC &amp; update import</span><span>iOS 15 or later</span><span>MPL-2.0</span>
+    <span aria-hidden="true">Built on Cemu</span><span aria-hidden="true">Metal-native renderer</span><span aria-hidden="true">Vulkan via MoltenVK</span><span aria-hidden="true">4 save-state slots per game</span><span aria-hidden="true">20 controller skins</span><span aria-hidden="true">31 app icons &amp; themes</span><span aria-hidden="true">Graphic packs</span><span aria-hidden="true">DLC &amp; update import</span><span aria-hidden="true">iOS 15 or later</span><span aria-hidden="true">MPL-2.0</span>
+  </div>
+</div>
+
+
+<section class="section" id="about" style="padding-bottom:0">
+  <div class="wrap about">
+    <div data-reveal>
+      <span class="eyebrow">About</span>
+      <h2>About MuffinEMU</h2>
+      <p class="about-lede"><strong>MuffinEMU</strong> (also written Muffin EMU or Muffin-EMU) is a free, open-source Wii U emulator for iPhone and iPad, based on Cemu. This is the official MuffinEMU website; the source code is on GitHub at <a href="https://github.com/kiddreads/MuffinEMU">github.com/kiddreads/MuffinEMU</a>.</p>
+    </div>
+    <div class="card official" data-reveal style="--i:1">
+      <h3>Official links</h3>
+      <ul class="official-links">
+        <li>Website: <a href="https://kiddreads.github.io/MuffinEMU/">kiddreads.github.io/MuffinEMU</a></li>
+        <li>Source code: <a href="https://github.com/kiddreads/MuffinEMU">github.com/kiddreads/MuffinEMU</a></li>
+        <li>Downloads: <a href="https://github.com/kiddreads/MuffinEMU/releases">MuffinEMU releases on GitHub</a></li>
+        <li>SideStore, AltStore and LiveContainer source: <span class="url">https://kiddreads.github.io/MuffinEMU/apps.json</span></li>
+        <li>TrollStore source: <span class="url">https://kiddreads.github.io/MuffinEMU/trollstore.json</span></li>
+        <li>Nightly and experimental sources: listed in the <a href="docs/installation.html#install">installation guide</a></li>
+        <li>Bug reports: <a href="https://github.com/kiddreads/MuffinEMU/issues">MuffinEMU issues on GitHub</a></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section-head" data-reveal>
+      <span class="eyebrow">The core</span>
+      <h2>Console-class emulation, <span class="grad-text">in your hand.</span></h2>
+    </div>
+    <div class="grid grid-3" data-stagger>
+      <div class="card pillar" data-reveal>
+        <span class="num">01</span>
+        <span class="card-icon"><svg aria-hidden="true"><use href="#i-chip"/></svg></span>
+        <h3>Built on Cemu</h3>
+        <p>MuffinEMU runs a Cemu-based core with its own fixes and a selection of upstream Cemu fixes.</p>
+      </div>
+      <div class="card pillar" data-reveal>
+        <span class="num">02</span>
+        <span class="card-icon"><svg aria-hidden="true"><use href="#i-display"/></svg></span>
+        <h3>Metal-native renderer</h3>
+        <p>Metal by default, with Vulkan (MoltenVK) as an option. On older GPUs such as the A12Z, draws that need geometry shaders are skipped, so some effects and a few graphic packs won't look right.</p>
+      </div>
+      <div class="card pillar" data-reveal>
+        <span class="num">03</span>
+        <span class="card-icon"><svg aria-hidden="true"><use href="#i-open"/></svg></span>
+        <h3>Open source</h3>
+        <p>The full source is on GitHub, and every release lists what changed. See <a href="#status">Status</a> for what works today.</p>
+      </div>
+    </div>
+    <div class="stats" data-reveal style="margin-top:18px">
+      <div class="stat"><b data-count="31">31</b><span>app icons, each with a theme</span></div>
+      <div class="stat"><b data-count="20">20</b><span>controller skins</span></div>
+      <div class="stat"><b data-count="4">4</b><span>save-state slots per game</span></div>
+      <div class="stat"><b data-count="15" data-suffix="+">15+</b><span>iOS version required</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="rail" data-rail aria-labelledby="inside-h">
+  <div class="rail-sticky">
+    <div class="wrap rail-head">
+      <div class="section-head" data-reveal>
+        <span class="eyebrow">What's inside</span>
+        <h2 id="inside-h">The app side, <span class="grad-text">rebuilt for touch.</span></h2>
+        <p>The app side: library, importer, on-screen controls, themes, saves and more.</p>
+      </div>
+      <div class="rail-count" aria-hidden="true"><b data-rail-index>01</b> / 06<div class="rail-bar"><i></i></div></div>
+    </div>
+    <div class="rail-track">
+      <article class="card card-link">
+        <span class="idx">01</span>
+        <span class="card-icon"><svg aria-hidden="true"><use href="#i-layout"/></svg></span>
+        <h3>Screen Layout</h3>
+        <p>Single Screen, Adaptive (both screens) or Both Screens (GamePad Top Right), plus output to a second display.</p>
+        <a class="more" href="docs/screen-layout.html">Read more<span class="visually-hidden"> about Screen Layout</span> <span aria-hidden="true">→</span></a>
+      </article>
+      <article class="card card-link">
+        <span class="idx">02</span>
+        <span class="card-icon"><svg aria-hidden="true"><use href="#i-save"/></svg></span>
+        <h3>Save States</h3>
+        <p>4 numbered slots per game, alongside normal in-game saves.</p>
+        <a class="more" href="docs/save-states.html">Read more<span class="visually-hidden"> about Save States</span> <span aria-hidden="true">→</span></a>
+      </article>
+      <article class="card card-link">
+        <span class="idx">03</span>
+        <span class="card-icon"><svg aria-hidden="true"><use href="#i-gamepad"/></svg></span>
+        <h3>GamePad &amp; controls</h3>
+        <p>A measured on-screen Wii U GamePad taken off real hardware, a hide-controls button, comfort controls, and 20 controller skins.</p>
+        <a class="more" href="docs/controls.html">Read more<span class="visually-hidden"> about GamePad &amp; controls</span> <span aria-hidden="true">→</span></a>
+      </article>
+      <article class="card card-link">
+        <span class="idx">04</span>
+        <span class="card-icon"><svg aria-hidden="true"><use href="#i-touch"/></svg></span>
+        <h3>Melo-Controller</h3>
+        <p>Melo-Controller, stossy11's touch pad with its own layout editor, as a toggle alongside MuffinEMU's own pad.</p>
+        <a class="more" href="docs/controls.html#melo-controller">Read more<span class="visually-hidden"> about Melo-Controller</span> <span aria-hidden="true">→</span></a>
+      </article>
+      <article class="card card-link">
+        <span class="idx">05</span>
+        <span class="card-icon"><svg aria-hidden="true"><use href="#i-palette"/></svg></span>
+        <h3>Themes &amp; icons</h3>
+        <p>31 app icons, each with a matching colour theme. Three are unlocked with a code. The switcher in the header previews them.</p>
+        <a class="more" href="docs/themes.html">Read more<span class="visually-hidden"> about Themes &amp; icons</span> <span aria-hidden="true">→</span></a>
+      </article>
+      <article class="card card-link">
+        <span class="idx">06</span>
+        <span class="card-icon"><svg aria-hidden="true"><use href="#i-puzzle"/></svg></span>
+        <h3>Graphic packs, DLC &amp; updates</h3>
+        <p>Toggle graphic packs from Documents/mlc/graphicPacks, and import DLC or update dumps with automatic title-ID matching.</p>
+        <a class="more" href="docs/features.html#library">Read more<span class="visually-hidden"> about Graphic packs, DLC &amp; updates</span> <span aria-hidden="true">→</span></a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="themes">
+  <div class="wrap lab">
+    <div data-reveal>
+      <span class="eyebrow">Theme lab</span>
+      <h2>31 looks. <span class="grad-text">One tap.</span></h2>
+      <p style="color:var(--text-2);font-size:1.1rem">Every app theme, with its real colours from the app. Pick one and this whole site takes it on. Your choice is remembered on every page.</p>
+      <div class="orbs" data-orbs role="group" aria-label="Themes"></div>
+      <p class="lab-meta">Or press <span class="kbd">⌘K</span> and type “theme”.</p>
+    </div>
+    <div class="lab-preview" data-lab data-reveal="scale" aria-hidden="true">
+      <div class="lp-swatches"><i></i><i></i><i></i><i></i></div>
+      <div class="lp-glass">
+        <img src="assets/icon.png" alt="" width="56" height="56">
+        <div><div class="lp-name">Bakery (Original)</div><div class="lp-sub">1 / 31</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="install" style="padding-top:0">
+  <div class="wrap">
+    <div class="install-panel" data-reveal="scale">
+      <span class="eyebrow">Install</span>
+      <h2>Install <span class="grad-text">MuffinEMU</span></h2>
+      <p style="color:var(--text-2);font-size:1.1rem;max-width:44em">Pick the source that matches how you install apps. iPhone and iPad, iOS 15 or later.</p>
+      <div class="install-row">
+        <a class="btn btn-primary" href="sidestore://source?url=https://kiddreads.github.io/MuffinEMU/apps.json">Add to SideStore <span class="arrow" aria-hidden="true">→</span></a>
+        <a class="btn btn-secondary" href="altstore://source?url=https://kiddreads.github.io/MuffinEMU/apps.json">Add to AltStore</a>
+        <a class="btn btn-secondary" href="docs/installation.html">TrollStore / full instructions</a>
+      </div>
+      <div class="source-field">
+        <span class="lbl">source</span>
+        <code>https://kiddreads.github.io/MuffinEMU/apps.json</code>
+        <button class="icon-btn" type="button" data-copy="https://kiddreads.github.io/MuffinEMU/apps.json" aria-label="Copy source URL"><svg aria-hidden="true"><use href="#i-copy"/></svg></button>
+      </div>
+      <p class="install-foot">The recompiler (JIT) needs an external enabler — StikJIT, SideStore, TrollStore or LiveContainer. Without one, MuffinEMU uses the interpreter, which is slower.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="status" style="padding-top:0">
+  <div class="wrap">
+    <div class="section-head" data-reveal>
+      <span class="eyebrow">Status</span>
+      <h2>Where things stand.</h2>
+      <p>Tested on an iPad Pro (A12Z).</p>
+    </div>
+    <div class="grid grid-2" data-stagger style="align-items:start">
+      <div class="card status-card" data-reveal>
+        <header><h3>Confirmed</h3><span class="badge ok">Working</span></header>
+        <ul class="status-list">
+          <li class="yes">Some Wii U games boot from a library imported through Files</li>
+          <li class="yes">The Metal renderer, the default, draws on the device</li>
+          <li class="yes">The multi-core interpreter is the default CPU mode; the recompiler needs a JIT enabler</li>
+        </ul>
+      </div>
+      <div class="card status-card" data-reveal>
+        <header><h3>Still open</h3><span class="badge open">In progress</span></header>
+        <ul class="status-list">
+          <li class="partial">No full playthrough of a retail game has been confirmed yet</li>
+          <li class="partial">Audio, physical controllers and game compatibility have not been tested widely</li>
+          <li class="partial">Output to a second display has not been tried with a display attached</li>
+          <li class="partial">Vulkan on A12Z-class iPads does not find a usable GPU; use Metal, the default</li>
+          <li class="partial">GPUs without mesh shader support skip geometry-shader and RECTS draws, so some effects can be missing</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="credits" style="padding-top:0">
+  <div class="wrap">
+    <div class="card credits" data-reveal>
+      <span class="eyebrow">Credits &amp; license</span>
+      <p>Bring your own games and keys. No copyrighted content is distributed here — not games, not system files, not keys.</p>
+      <p>MuffinEMU is built on <a href="https://github.com/cemu-project/Cemu">Cemu</a>. The optional melo-controls pad is <a href="https://github.com/stossy11/Melo-Controller">Melo-Controller</a> by stossy11 (GPL-3.0). The Vulkan path uses <a href="https://github.com/KhronosGroup/MoltenVK">MoltenVK</a>.</p>
+      <p>MuffinEMU's own source is <a href="https://github.com/kiddreads/MuffinEMU/blob/main/LICENSE.txt">MPL-2.0</a>, like Cemu. Because Melo-Controller (GPL-3.0) is linked into every build, a MuffinEMU IPA as a whole is distributed under GPL-3.0, with the repository above as its source.</p>
+    </div>
+  </div>
+</section>
