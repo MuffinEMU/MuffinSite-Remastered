@@ -261,8 +261,9 @@
     };
     Spring.prototype.rest = function () { return Math.abs(this.to - this.x) < 0.002 && Math.abs(this.v) < 0.002; };
     // Stiffness/damping: ~0.85 of critical damping gives a soft, slight overshoot.
-    var rx = new Spring(140, 20), ry = new Spring(140, 20);
-    var tx = new Spring(110, 18), ty = new Spring(110, 18);
+    // Softer than before (it felt twitchy); damping kept at the same ratio of critical.
+    var rx = new Spring(90, 16), ry = new Spring(90, 16);
+    var tx = new Spring(75, 15), ty = new Spring(75, 15);
     var lift = new Spring(220, 22); lift.x = lift.to = 1;
     var springs = [rx, ry, tx, ty, lift];
 
@@ -274,14 +275,14 @@
       if (mouseActive) {
         var r = heroVisual.getBoundingClientRect();
         var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-        var dx = pointer.x - cx, dy = pointer.y - cy, reach = Math.max(240, r.width);
+        var dx = pointer.x - cx, dy = pointer.y - cy, reach = Math.max(420, r.width * 1.75);
         var dist = Math.sqrt(dx * dx + dy * dy);
         var near = Math.exp(-Math.pow(dist / (r.width * 0.42), 2)); // 1 over the icon, ~0 far away
-        var max = 11 + 7 * near;
+        var max = 7 + 4.5 * near;
         ry.to = max * Math.tanh(dx / reach);
         rx.to = -max * Math.tanh(dy / reach);
-        tx.to = 9 * Math.tanh(dx / reach);
-        ty.to = 9 * Math.tanh(dy / reach);
+        tx.to = 6 * Math.tanh(dx / reach);
+        ty.to = 6 * Math.tanh(dy / reach);
         lift.to = 1 + 0.045 * near;
       } else {
         // Idle sway: two slow, unrelated sines, so it never looks like a loop.
