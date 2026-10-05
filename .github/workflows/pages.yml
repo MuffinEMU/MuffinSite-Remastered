@@ -1,5 +1,5 @@
 # Builds site/ as a preview and publishes it to this repo's GitHub Pages
-# (kiddreads.github.io/MuffinSite-Remastered). Preview builds are noindex,
+# (muffinemu.github.io/MuffinSite-Remastered). Preview builds are noindex,
 # skip GoatCounter, and keep canonical URLs on the official site.
 name: Publish preview to Pages
 

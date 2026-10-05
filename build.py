@@ -33,7 +33,7 @@ CONTENT = ROOT / "content"
 OUT = ROOT / "site"
 # Pages that stay in the MuffinEMU repo (the SideStore feeds, the GamePad
 # measurement tool) are linked there absolutely.
-LIVE = "https://kiddreads.github.io/MuffinEMU/"
+LIVE = "https://muffinemu.github.io/MuffinEMU/"
 
 DOCS_NAV = [
     ("index", "Overview"),
@@ -107,7 +107,7 @@ GOATCOUNTER = """<script>
 
 FINEPRINT = (
     'This is a preview of the redesigned site. The official MuffinEMU site is '
-    '<a href="https://kiddreads.github.io/MuffinEMU/">kiddreads.github.io/MuffinEMU</a>.'
+    '<a href="https://muffinemu.github.io/MuffinEMU/">muffinemu.github.io/MuffinEMU</a>.'
     if PREVIEW else
     'This site counts page visits with <a href="https://www.goatcounter.com">GoatCounter</a>: '
     'no cookies, no tracking across sites, no personal data. Fonts are served from this site.'
@@ -146,7 +146,7 @@ def header(prefix, current, slug=None):
 {docs_links}
         </div>
       </details>
-      <a href="https://github.com/kiddreads/MuffinEMU">GitHub</a>
+      <a href="https://github.com/MuffinEMU/MuffinEMU">GitHub</a>
       <button class="nav-theme" type="button" data-palette-open="theme "><span class="theme-dot" aria-hidden="true"></span>Theme: <span data-theme-name>Bakery (Original)</span></button>
     </nav>
     <div class="header-tools">
@@ -175,8 +175,8 @@ def footer(prefix):
         <a href="{prefix}docs/index.html">Docs</a>
         <a href="{prefix}docs/faq.html">FAQ</a>
         <a href="{prefix}docs/licenses.html">Licences</a>
-        <a href="https://github.com/kiddreads/MuffinEMU">GitHub</a>
-        <a href="https://github.com/kiddreads/MuffinEMU/issues">Report an issue</a>
+        <a href="https://github.com/MuffinEMU/MuffinEMU">GitHub</a>
+        <a href="https://github.com/MuffinEMU/MuffinEMU/issues">Report an issue</a>
       </nav>
     </div>
     <p class="fineprint">{FINEPRINT}</p>

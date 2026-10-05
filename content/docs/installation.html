@@ -52,20 +52,20 @@
 
     <h3>SideStore / AltStore / LiveContainer</h3>
     <div class="install-row">
-      <a class="btn btn-primary btn-sm" href="sidestore://source?url=https://kiddreads.github.io/MuffinEMU/apps.json">Add to SideStore</a>
-      <a class="btn btn-secondary btn-sm" href="altstore://source?url=https://kiddreads.github.io/MuffinEMU/apps.json">Add to AltStore</a>
+      <a class="btn btn-primary btn-sm" href="sidestore://source?url=https://muffinemu.github.io/MuffinEMU/apps.json">Add to SideStore</a>
+      <a class="btn btn-secondary btn-sm" href="altstore://source?url=https://muffinemu.github.io/MuffinEMU/apps.json">Add to AltStore</a>
     </div>
-    <p>Or add the source by hand: <span class="url">https://kiddreads.github.io/MuffinEMU/apps.json</span></p>
+    <p>Or add the source by hand: <span class="url">https://muffinemu.github.io/MuffinEMU/apps.json</span></p>
 
     <h3>TrollStore / jailbroken</h3>
-    <p>Add the source: <span class="url">https://kiddreads.github.io/MuffinEMU/trollstore.json</span></p>
-    <p>Or download <code>MuffinEMU-fakesigned.ipa</code> directly from <a href="https://github.com/kiddreads/MuffinEMU/releases/latest">the latest release</a>.</p>
+    <p>Add the source: <span class="url">https://muffinemu.github.io/MuffinEMU/trollstore.json</span></p>
+    <p>Or download <code>MuffinEMU-fakesigned.ipa</code> directly from <a href="https://github.com/MuffinEMU/MuffinEMU/releases/latest">the latest release</a>.</p>
 
     <h3>Nightly builds</h3>
-    <p>Want the newest build instead? Nightly sources: <span class="url">https://kiddreads.github.io/MuffinEMU/nightly.json</span> (SideStore, AltStore, LiveContainer) and <span class="url">https://kiddreads.github.io/MuffinEMU/nightly-trollstore.json</span> (TrollStore). Nightly builds are untested and replace a standard install.</p>
+    <p>Want the newest build instead? Nightly sources: <span class="url">https://muffinemu.github.io/MuffinEMU/nightly.json</span> (SideStore, AltStore, LiveContainer) and <span class="url">https://muffinemu.github.io/MuffinEMU/nightly-trollstore.json</span> (TrollStore). Nightly builds are untested and replace a standard install.</p>
 
     <h3>Experimental builds (for testers)</h3>
-    <p>Unfinished test builds of work in progress, published by hand. Experimental sources: <span class="url">https://kiddreads.github.io/MuffinEMU/experimental.json</span> (SideStore, AltStore, LiveContainer) and <span class="url">https://kiddreads.github.io/MuffinEMU/experimental-trollstore.json</span> (TrollStore). Every experiment is listed as its own version, newest first. Each one replaces an installed MuffinEMU (same bundle identifier, so your games and saves carry over) and can misbehave; they never appear in the standard or nightly sources. For normal play use the standard source.</p>
+    <p>Unfinished test builds of work in progress, published by hand. Experimental sources: <span class="url">https://muffinemu.github.io/MuffinEMU/experimental.json</span> (SideStore, AltStore, LiveContainer) and <span class="url">https://muffinemu.github.io/MuffinEMU/experimental-trollstore.json</span> (TrollStore). Every experiment is listed as its own version, newest first. Each one replaces an installed MuffinEMU (same bundle identifier, so your games and saves carry over) and can misbehave; they never appear in the standard or nightly sources. For normal play use the standard source.</p>
 
     <p>MuffinEMU uses its own bundle identifier (<code>com.kiddreads.MuffinEMU</code>), Every build of <code>main</code> is published as a numbered release going up by 0.1 — after .9 comes the next whole number: 1.0, 1.1 … 1.9, 2.0.</p>
 
@@ -94,7 +94,7 @@
 
     <h2 id="source">Building from source</h2>
     <p>CI is the build: <code>.github/workflows/build-ios-app.yml</code> runs the whole thing on a macOS runner. By hand, on a Mac with full Xcode:</p>
-    <pre><code>git clone --recursive https://github.com/kiddreads/MuffinEMU.git
+    <pre><code>git clone --recursive https://github.com/MuffinEMU/MuffinEMU.git
 cd MuffinEMU
 cmake -S . -B build-ios -G Ninja \
   -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 \

@@ -576,8 +576,8 @@
     ["Troubleshooting", "docs/troubleshooting.html", "Launch, JIT, logs"],
     ["FAQ", "docs/faq.html", "Common questions"],
     ["Open-source licences", "docs/licenses.html", "Third-party licences"],
-    ["GitHub", "https://github.com/kiddreads/MuffinEMU", "Source code"],
-    ["Report an issue", "https://github.com/kiddreads/MuffinEMU/issues", "GitHub issues"]
+    ["GitHub", "https://github.com/MuffinEMU/MuffinEMU", "Source code"],
+    ["Report an issue", "https://github.com/MuffinEMU/MuffinEMU/issues", "GitHub issues"]
   ];
   var ICON_PAGE = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4"/></svg>';
   var ICON_HASH = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M9 4 7 20M17 4l-2 16M4 9h16M3 15h16"/></svg>';
@@ -616,7 +616,7 @@
         close();
         var c = $("[data-copy]");
         if (c) { c.click(); return; }
-        var url = "https://kiddreads.github.io/MuffinEMU/apps.json";
+        var url = "https://muffinemu.github.io/MuffinEMU/apps.json";
         (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject())
           .then(function () { toast("Source URL copied"); }, function () { toast(url); });
       } });

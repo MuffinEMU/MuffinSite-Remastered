@@ -1,6 +1,6 @@
 # MuffinSite Remastered
 
-The redesigned website for [MuffinEMU](https://github.com/kiddreads/MuffinEMU), the
+The redesigned website for [MuffinEMU](https://github.com/MuffinEMU/MuffinEMU), the
 Wii U emulator for iPhone and iPad. Plain HTML, CSS and JavaScript with a small
 Python build step; no npm, no framework, no runtime dependencies.
 
@@ -99,7 +99,7 @@ resvg) and add them to the app's `AltIcon-<id>.appiconset` as the "any",
 
 ## Keeping it in step with the live site
 
-The live site in `kiddreads/MuffinEMU/docs` stays the source of truth for the words
+The live site in `MuffinEMU/MuffinEMU/docs` stays the source of truth for the words
 and the metadata (the app's Swift source is the source for theme colours); this repo owns only the presentation.
 
 ```sh
@@ -116,7 +116,7 @@ missing.
 ## Going live
 
 **Preview:** every push to `main` publishes a preview build to
-<https://kiddreads.github.io/MuffinSite-Remastered/> (`PREVIEW=1`: kept out of search
+<https://muffinemu.github.io/MuffinSite-Remastered/> (`PREVIEW=1`: kept out of search
 engines, not counted in GoatCounter, footer points to the official site; canonical
 URLs stay on the official site).
 
