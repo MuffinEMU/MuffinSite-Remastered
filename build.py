@@ -146,7 +146,7 @@ def header(prefix, current, slug=None):
 {docs_links}
         </div>
       </details>
-      <a href="https://github.com/MuffinEMU/MuffinEMU">GitHub</a>
+      <a href="https://github.com/MuffinEMU/Muffin-EMU">GitHub</a>
       <button class="nav-theme" type="button" data-palette-open="theme "><span class="theme-dot" aria-hidden="true"></span>Theme: <span data-theme-name>Bakery (Original)</span></button>
     </nav>
     <div class="header-tools">
@@ -175,8 +175,8 @@ def footer(prefix):
         <a href="{prefix}docs/index.html">Docs</a>
         <a href="{prefix}docs/faq.html">FAQ</a>
         <a href="{prefix}docs/licenses.html">Licences</a>
-        <a href="https://github.com/MuffinEMU/MuffinEMU">GitHub</a>
-        <a href="https://github.com/MuffinEMU/MuffinEMU/issues">Report an issue</a>
+        <a href="https://github.com/MuffinEMU/Muffin-EMU">GitHub</a>
+        <a href="https://github.com/MuffinEMU/Muffin-EMU/issues">Report an issue</a>
       </nav>
     </div>
     <p class="fineprint">{FINEPRINT}</p>

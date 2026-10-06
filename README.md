@@ -1,6 +1,6 @@
 # MuffinSite Remastered
 
-The redesigned website for [MuffinEMU](https://github.com/MuffinEMU/MuffinEMU), the
+The redesigned website for [MuffinEMU](https://github.com/MuffinEMU/Muffin-EMU), the
 Wii U emulator for iPhone and iPad. Plain HTML, CSS and JavaScript with a small
 Python build step; no npm, no framework, no runtime dependencies.
 
@@ -99,7 +99,7 @@ resvg) and add them to the app's `AltIcon-<id>.appiconset` as the "any",
 
 ## Keeping it in step with the live site
 
-The live site in `MuffinEMU/MuffinEMU/docs` stays the source of truth for the words
+The live site in `MuffinEMU/Muffin-EMU/docs` stays the source of truth for the words
 and the metadata (the app's Swift source is the source for theme colours); this repo owns only the presentation.
 
 ```sh
