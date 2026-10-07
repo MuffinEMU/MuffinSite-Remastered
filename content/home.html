@@ -178,14 +178,42 @@
       <div class="install-row">
         <a class="btn btn-primary" href="sidestore://source?url=https://muffinemu.github.io/MuffinEMU/apps.json">Add to SideStore <span class="arrow" aria-hidden="true">→</span></a>
         <a class="btn btn-secondary" href="altstore://source?url=https://muffinemu.github.io/MuffinEMU/apps.json">Add to AltStore</a>
-        <a class="btn btn-secondary" href="docs/installation.html">TrollStore / full instructions</a>
+        <a class="btn btn-secondary" href="docs/installation.html">Full instructions</a>
       </div>
       <div class="source-field">
-        <span class="lbl">source</span>
+        <span class="lbl">SideStore / AltStore / LiveContainer</span>
         <code>https://muffinemu.github.io/MuffinEMU/apps.json</code>
-        <button class="icon-btn" type="button" data-copy="https://muffinemu.github.io/MuffinEMU/apps.json" aria-label="Copy source URL"><svg aria-hidden="true"><use href="#i-copy"/></svg></button>
+        <button class="icon-btn" type="button" data-copy="https://muffinemu.github.io/MuffinEMU/apps.json" aria-label="Copy the SideStore / AltStore / LiveContainer source URL"><svg aria-hidden="true"><use href="#i-copy"/></svg></button>
       </div>
-      <p class="install-foot">The recompiler (JIT) needs an external enabler — StikJIT, SideStore, TrollStore or LiveContainer. Without one, MuffinEMU uses the interpreter, which is slower.</p>
+      <div class="source-field">
+        <span class="lbl">TrollStore</span>
+        <code>https://muffinemu.github.io/MuffinEMU/trollstore.json</code>
+        <button class="icon-btn" type="button" data-copy="https://muffinemu.github.io/MuffinEMU/trollstore.json" aria-label="Copy the TrollStore source URL"><svg aria-hidden="true"><use href="#i-copy"/></svg></button>
+      </div>
+      <details class="install-more">
+        <summary>Nightly and experimental sources</summary>
+      <div class="source-field">
+        <span class="lbl">Nightly</span>
+        <code>https://muffinemu.github.io/MuffinEMU/nightly.json</code>
+        <button class="icon-btn" type="button" data-copy="https://muffinemu.github.io/MuffinEMU/nightly.json" aria-label="Copy the Nightly source URL"><svg aria-hidden="true"><use href="#i-copy"/></svg></button>
+      </div>
+      <div class="source-field">
+        <span class="lbl">Nightly (TrollStore)</span>
+        <code>https://muffinemu.github.io/MuffinEMU/nightly-trollstore.json</code>
+        <button class="icon-btn" type="button" data-copy="https://muffinemu.github.io/MuffinEMU/nightly-trollstore.json" aria-label="Copy the Nightly (TrollStore) source URL"><svg aria-hidden="true"><use href="#i-copy"/></svg></button>
+      </div>
+      <div class="source-field">
+        <span class="lbl">Experimental</span>
+        <code>https://muffinemu.github.io/MuffinEMU/experimental.json</code>
+        <button class="icon-btn" type="button" data-copy="https://muffinemu.github.io/MuffinEMU/experimental.json" aria-label="Copy the Experimental source URL"><svg aria-hidden="true"><use href="#i-copy"/></svg></button>
+      </div>
+      <div class="source-field">
+        <span class="lbl">Experimental (TrollStore)</span>
+        <code>https://muffinemu.github.io/MuffinEMU/experimental-trollstore.json</code>
+        <button class="icon-btn" type="button" data-copy="https://muffinemu.github.io/MuffinEMU/experimental-trollstore.json" aria-label="Copy the Experimental (TrollStore) source URL"><svg aria-hidden="true"><use href="#i-copy"/></svg></button>
+      </div>
+      </details>
+      <p class="install-foot">The recompiler (JIT) needs an enabler: StikDebug or LiveContainer, or install the TrollStore build. MuffinEMU offers to turn JIT on at launch. Without one, MuffinEMU uses the interpreter, which is slower.</p>
     </div>
   </div>
 </section>
