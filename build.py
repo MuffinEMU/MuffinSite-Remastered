@@ -45,6 +45,7 @@ DOCS_NAV = [
     ("themes", "Themes &amp; Icons"),
     ("troubleshooting", "Troubleshooting"),
     ("faq", "FAQ"),
+    ("compatibility", "Compatibility"),
 ]
 
 EXTRA_ICONS = """
